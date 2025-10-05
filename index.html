@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PLANETS PREDICTOR</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #0c0a09; color: #f3f4f6; }
+        @keyframes background-slideshow {
+            0%, 100% { background-image: linear-gradient(rgba(12, 10, 9, 0.8), rgba(12, 10, 9, 0.95)), url('https://images.unsplash.com/photo-1534796636912-3b95b3ab5986?q=80&w=2071&auto-format&fit=crop'); opacity: 1; }
+            25% { background-image: linear-gradient(rgba(12, 10, 9, 0.8), rgba(12, 10, 9, 0.95)), url('https://images.unsplash.com/photo-1506443432602-ac2fcd6f54e0?q=80&w=2070&auto-format&fit=crop'); }
+            50% { background-image: linear-gradient(rgba(12, 10, 9, 0.8), rgba(12, 10, 9, 0.95)), url('https://images.unsplash.com/photo-1614926857242-73c3d5f4b574?q=80&w=2070&auto-format&fit=crop'); }
+            75% { background-image: linear-gradient(rgba(12, 10, 9, 0.8), rgba(12, 10, 9, 0.95)), url('https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?q=80&w=2072&auto-format&fit=crop'); }
+        }
+        body::before {
+            content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;
+            background-size: cover; background-position: center; background-attachment: fixed;
+            animation: background-slideshow 40s linear infinite;
+        }
+        .font-cinzel { font-family: 'Cinzel', serif; }
+        @keyframes pulse-zap { 0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(250, 204, 21, 0.7); } 50% { transform: scale(1.05); box-shadow: 0 0 20px 10px rgba(250, 204, 21, 0); } }
+        .animate-pulse-zap { animation: pulse-zap 2s infinite; }
+        @keyframes slide-in-up { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-slide-in-up { animation: slide-in-up 0.6s ease-out forwards; }
+        @keyframes slide-down-fade { from { opacity: 0; transform: translateY(-100%); } 10% { opacity: 1; transform: translateY(0); } 90% { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-100%); } }
+        .notification-animation { animation: slide-down-fade 4s ease-in-out forwards; }
+        @keyframes typing-dot { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1.0); } }
+        .typing-dot { animation: typing-dot 1.4s infinite ease-in-out both; }
+        .typing-dot:nth-child(1) { animation-delay: -0.32s; } .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+        input[type="date"], input[type="time"] { color-scheme: dark; }
+        input, textarea { color: #e5e7eb; } ::placeholder { color: #6b7280; opacity: 1; }
+        .no-scrollbar::-webkit-scrollbar { display: none; } .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen sm:p-4 text-white">
+
+    <div id="app-container" class="relative w-full max-w-md h-screen sm:h-[85vh] sm:max-h-[900px] flex flex-col bg-stone-900/60 backdrop-blur-2xl border border-stone-700 sm:rounded-2xl shadow-2xl shadow-yellow-500/5 overflow-hidden animate-slide-in-up">
+        <div id="loading-overlay" class="absolute inset-0 bg-stone-900/80 backdrop-blur-sm z-50 flex flex-col items-center justify-center hidden">
+            <div class="w-16 h-16 border-4 border-yellow-400 border-t-transparent rounded-full animate-spin"></div>
+            <p class="mt-4 text-lg">Connecting to Cosmos...</p>
+        </div>
+        <div id="notification-banner" class="hidden absolute top-0 left-0 right-0 p-4 bg-green-500 text-white text-center z-50">
+            <p id="notification-text"></p>
+        </div>
+        <header class="p-5 border-b border-stone-700 text-center flex-shrink-0">
+            <h1 class="text-3xl font-bold tracking-wider text-yellow-300 font-cinzel">PLANETS PREDICTOR</h1>
+            <p class="text-sm text-stone-400 mt-1">Your Cosmic Guide to Clarity</p>
+        </header>
+        <main class="flex-grow overflow-y-auto no-scrollbar"><div id="page-content" class="p-6"></div></main>
+        <nav class="flex border-t border-stone-600 bg-stone-900/70 backdrop-blur-sm flex-shrink-0">
+            <button data-tab="chart" class="main-tab-btn flex-1 p-3 text-sm font-semibold text-yellow-300 flex flex-col items-center justify-center gap-1">
+                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="3"></circle><line x1="12" y1="2" x2="12" y2="5"></line><line x1="12" y1="19" x2="12" y2="22"></line><line x1="2" y1="12" x2="5" y2="12"></line><line x1="19" y1="12" x2="22" y2="12"></line></svg>
+                <span>Oracle</span>
+            </button>
+            <button data-tab="chat" class="main-tab-btn flex-1 p-3 text-sm font-semibold text-stone-400 flex flex-col items-center justify-center gap-1">
+                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15.5 16.5 22 3l-3-3-3.5 2.5"></path><path d="m14 6-1-1L2 16l3 3 11-11Z"></path><path d="M9 12H2"></path><path d="m15 6 3.5 2.5"></path></svg>
+                <span>Astrologer</span>
+            </button>
+            <button data-tab="tools" class="main-tab-btn flex-1 p-3 text-sm font-semibold text-stone-400 flex flex-col items-center justify-center gap-1">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18"></path><path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path><path d="M12 22A10 10 0 1 0 2 12"></path></svg>
+                <span>Tools</span>
+            </button>
+             <button data-tab="profile" class="main-tab-btn flex-1 p-3 text-sm font-semibold text-stone-400 flex flex-col items-center justify-center gap-1">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2Z"></path><path d="M12 12a5 5 0 1 0 5-5 5 5 0 0 0-5 5Z"></path><path d="M12 12a10 9.4 0 0 0-10 9 10 10 0 0 0 20 0 10 9.4 0 0 0-10-9Z"></path></svg>
+                <span>Profile</span>
+            </button>
+        </nav>
+    </div>
+    
+    <div id="modal-container" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
+        <div id="modal-content" class="w-full max-w-md bg-stone-900 border border-stone-700 rounded-2xl p-6 animate-slide-in-up"></div>
+    </div>
+
+    <script>
+        const supabaseUrl = 'https://qnfqdaoxgpsveswsqetu.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFuZnFkYW94Z3BzdmVzd3NxZXR1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk2NjIwMTQsImV4cCI6MjA3NTIzODAxNH0.I19nEWI6BgwT5vIIacZvrT53N1yZHO5JlGn-xVFVk54';
+        const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+
+        const app = {
+            elements: {
+                pageContent: document.getElementById('page-content'),
+                mainTabs: document.querySelectorAll('.main-tab-btn'),
+                loadingOverlay: document.getElementById('loading-overlay'),
+                notification: { banner: document.getElementById('notification-banner'), text: document.getElementById('notification-text') },
+                modal: { container: document.getElementById('modal-container'), content: document.getElementById('modal-content') }
+            },
+            state: {},
+            timerInterval: null,
+            async init() {
+                this.showLoading();
+                this.attachEventListeners();
+                await this.loadStateFromSupabase();
+                this.render();
+                this.startRealtimeUpdates();
+                this.hideLoading();
+            },
+            getDefaultState() {
+                return {
+                    userId: localStorage.getItem('planetsPredictorUserId') || this.generateUUID(),
+                    activeTab: 'chart',
+                    birthDetails: null,
+                    hasPaid: false,
+                    chatHistory: [],
+                    timerEndTime: null,
+                    reminderSent: false,
+                    consultationEnded: false,
+                    oracleHistory: []
+                };
+            },
+            async loadStateFromSupabase() {
+                let userId = localStorage.getItem('planetsPredictorUserId');
+                if (!userId) {
+                    userId = this.generateUUID();
+                    localStorage.setItem('planetsPredictorUserId', userId);
+                }
+
+                const { data, error } = await supabaseClient.from('users').select('*').eq('user_id', userId).single();
+
+                if (data) {
+                    // Map from snake_case (DB) to camelCase (app state)
+                    this.state = {
+                        userId: data.user_id,
+                        activeTab: this.state.activeTab || 'chart', // Persist tab locally
+                        birthDetails: {
+                            name: data.name,
+                            phone: data.phone,
+                            dob: data.dob,
+                            tob: data.tob,
+                            pob: data.pob
+                        },
+                        hasPaid: data.has_paid,
+                        chatHistory: data.chat_history || [],
+                        oracleHistory: data.oracle_history || [],
+                        timerEndTime: data.timer_end_time ? new Date(data.timer_end_time).getTime() : null,
+                        reminderSent: data.reminder_sent,
+                        consultationEnded: data.consultation_ended,
+                    };
+                } else {
+                    this.state = this.getDefaultState();
+                    if (error && error.code !== 'PGRST116') console.error("Error loading user state:", error);
+                }
+            },
+            async saveStateToSupabase() {
+                const userId = this.state.userId;
+                if (!userId) { console.error("Cannot save state without a user ID."); return; }
+
+                // Map from camelCase (app state) to snake_case (DB)
+                const userData = {
+                    user_id: userId,
+                    name: this.state.birthDetails?.name,
+                    phone: this.state.birthDetails?.phone,
+                    dob: this.state.birthDetails?.dob,
+                    tob: this.state.birthDetails?.tob,
+                    pob: this.state.birthDetails?.pob,
+                    has_paid: this.state.hasPaid,
+                    chat_history: this.state.chatHistory,
+                    oracle_history: this.state.oracleHistory,
+                    timer_end_time: this.state.timerEndTime ? new Date(this.state.timerEndTime).toISOString() : null,
+                    reminder_sent: this.state.reminderSent,
+                    consultation_ended: this.state.consultationEnded,
+                    status: this.determineStatus()
+                };
+
+                const { error } = await supabaseClient.from('users').upsert(userData, { onConflict: 'user_id' });
+                if (error) console.error("Error saving user state:", error);
+            },
+            startRealtimeUpdates() {
+                supabaseClient.channel('public:users')
+                    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'users', filter: `user_id=eq.${this.state.userId}` }, payload => {
+                        console.log('Realtime update received!', payload);
+                        const updatedData = payload.new;
+                        // Check if the update came from an admin reply
+                        if(updatedData.chat_history.length > this.state.chatHistory.length) {
+                           this.showNotification("The astrologer has replied!");
+                           this.simulateWhatsappNotification(`The astrologer has answered your query in the app.`);
+                        }
+                        this.loadStateFromSupabase().then(() => this.render());
+                    })
+                    .subscribe();
+            },
+            determineStatus() {
+                if (this.state.consultationEnded) return 'Resolved';
+                if (this.state.chatHistory.length > 0) return 'Active Chat';
+                if (this.state.birthDetails) return 'New User';
+                return 'Guest';
+            },
+            render() {
+                this.updateActiveTabUI();
+                const pageContentEl = this.elements.pageContent;
+                pageContentEl.className = 'p-6';
+                if (['chat', 'chart'].includes(this.state.activeTab)) pageContentEl.className = 'p-0 h-full flex flex-col';
+                const renderer = `render_${this.state.activeTab}`;
+                if (typeof this[renderer] === 'function') this.elements.pageContent.innerHTML = this[renderer]();
+                this.attachPageSpecificEventListeners();
+            },
+            
+            async handleUserMessage() {
+                const input = document.getElementById('chat-input');
+                if (input.value.trim()) {
+                    await this.addMessage('user', input.value.trim());
+                    input.value = '';
+                }
+            },
+            async handleOracleQuery() {
+                const input = document.getElementById('oracle-input');
+                if (input.value.trim()) {
+                    await this.addOracleMessage('user', input.value.trim());
+                    input.value = '';
+                }
+            },
+            async addMessage(sender, text) {
+                this.state.chatHistory.push({ sender, text, timestamp: Date.now() });
+                if (sender === 'user' && this.state.chatHistory.filter(m => m.sender === 'user').length === 1) {
+                    this.state.timerEndTime = Date.now() + 3600 * 1000;
+                    this.simulateWhatsappNotification('Your 1-hour guaranteed chat session has started!');
+                }
+                await this.saveStateToSupabase();
+                this.render();
+                if (sender === 'user') this.simulateAstrologerReply();
+            },
+            async addOracleMessage(sender, text) {
+                this.state.oracleHistory.push({ sender, text, timestamp: Date.now() });
+                await this.saveStateToSupabase();
+                this.render();
+                if (sender === 'user') this.simulateOracleReply();
+            },
+            async simulateAstrologerReply() {
+                const typingIndicator = document.getElementById('typing-indicator');
+                if(typingIndicator) typingIndicator.classList.remove('hidden');
+                setTimeout(async () => {
+                    if(typingIndicator) typingIndicator.classList.add('hidden');
+                    const replies = ["Thank you for sharing. One moment...", "Interesting point. Let me consult the charts.", "I see. This connects to your Saturn transit."];
+                    const reply = replies[Math.floor(Math.random() * replies.length)];
+                    await this.addMessage('astrologer', reply);
+                    this.showNotification("The astrologer has replied!");
+                    this.simulateWhatsappNotification(`The astrologer has answered your query in the app.`);
+                }, 3000 + Math.random() * 3000);
+            },
+            async endConsultation() {
+                this.state.consultationEnded = true;
+                if(this.timerInterval) clearInterval(this.timerInterval);
+                await this.addMessage('astrologer', 'Thank you for the session. The chat has ended.');
+                await this.saveStateToSupabase();
+                this.render();
+            },
+            async saveBirthDetails(formData, options = {}) {
+                this.state.birthDetails = {
+                    name: formData.get('name'), phone: formData.get('phone'),
+                    dob: formData.get('dob'), tob: formData.get('tob'), pob: formData.get('pob')
+                };
+                this.state.oracleHistory = [];
+                await this.saveStateToSupabase();
+                this.simulateWhatsappNotification(`Welcome, ${this.state.birthDetails.name}! Your cosmic blueprint is ready.`);
+                this.hideModal();
+                if (options.afterSave) options.afterSave();
+                else this.render();
+            },
+            async completePayment() {
+                this.state.hasPaid = true;
+                await this.saveStateToSupabase();
+                this.simulateWhatsappNotification('Payment successful! Your direct line to our astrologer is open.');
+                this.hideModal();
+                this.navigateTo('chat');
+            },
+            showLoading() { this.elements.loadingOverlay.classList.remove('hidden'); },
+            hideLoading() { this.elements.loadingOverlay.classList.add('hidden'); },
+            async reset() {
+                this.showLoading();
+                const { error } = await supabaseClient.from('users').delete().eq('user_id', this.state.userId);
+                if(error) console.error("Error deleting user:", error);
+                localStorage.removeItem('planetsPredictorUserId');
+                window.location.reload();
+            },
+            // --- UNCHANGED CODE BELOW (renderers, event listeners, utils) ---
+            updateActiveTabUI() { this.elements.mainTabs.forEach(btn => { btn.classList.toggle('text-yellow-300', btn.dataset.tab === this.state.activeTab); btn.classList.toggle('text-stone-400', btn.dataset.tab !== this.state.activeTab); }); },
+            render_chart() { if (!this.state.birthDetails) { return `<div class="p-6 text-center space-y-4"><h2 class="text-xl font-semibold text-sky-200">Welcome, Seeker</h2><p>Please provide your birth details on the Profile tab to unlock the Astro-Oracle.</p><button onclick="app.navigateTo('profile')" class="bg-yellow-400 text-stone-900 font-bold py-3 px-5 rounded-lg">Go to Profile</button></div>`; } if (this.state.oracleHistory.length === 0) { this.addOracleMessage('oracle', `Greetings, ${this.state.birthDetails.name}. Ask me about your day, lucky color, or career focus.`); } const cosmicEvents = ["Mercury is in retrograde. Expect minor communication delays.", "Full Moon in Aries tonight. A powerful time for new beginnings.", "Venus enters Libra, fostering harmony in relationships.", "Mars squares Pluto, bringing intense energy. Channel it wisely."]; const todayEvent = cosmicEvents[new Date().getDate() % cosmicEvents.length]; return `<div class="p-6 border-b border-stone-700 flex-shrink-0"><h2 class="text-lg font-semibold text-sky-200">Cosmic Events Today</h2><p class="text-sm text-stone-300">${todayEvent}</p></div><div id="oracle-messages" class="flex-grow space-y-4 overflow-y-auto no-scrollbar p-6">${this.state.oracleHistory.map(msg => this.renderMessage(msg, 'oracle')).join('')}</div><form id="oracle-form" class="p-6 border-t border-stone-700 flex gap-2 flex-shrink-0"><input id="oracle-input" type="text" placeholder="Ask the Oracle..." required class="flex-grow p-3 bg-stone-800 border border-stone-600 rounded-lg"><button type="submit" class="bg-yellow-400 text-stone-900 font-bold p-3 rounded-lg">Ask</button></form>`; },
+            render_chat() { const baseClasses = "p-6 h-full flex flex-col"; if (!this.state.birthDetails) { return `<div class="p-6 text-center space-y-4"><p>Please provide your birth details on the Profile tab to begin.</p><button onclick="app.navigateTo('profile')" class="bg-yellow-400 text-stone-900 font-bold py-2 px-4 rounded-lg">Go to Profile</button></div>`; } if (!this.state.hasPaid) { return `<div class="p-6 text-center space-y-4"><p>Your chat is locked. Please complete the payment to connect with an astrologer.</p><button onclick="app.showModal('payment')" class="bg-yellow-400 text-stone-900 font-bold py-3 px-4 rounded-lg animate-pulse-zap">Unlock Chat</button></div>`; } let timerHTML = this.state.timerEndTime && !this.state.consultationEnded ? `<div class="bg-stone-800 p-2 rounded-lg text-center my-4 flex-shrink-0"><div id="timer" class="text-3xl font-bold tracking-widest text-yellow-300">--:--</div><p class="text-xs text-stone-400 mt-1">RESPONSE GUARANTEE</p></div>` : ''; let endButtonHTML = this.state.chatHistory.some(m => m.sender === 'astrologer') && !this.state.consultationEnded ? `<button id="end-consultation-btn" class="w-full mt-4 bg-red-500/80 text-white font-semibold py-2 px-4 rounded-lg text-sm flex-shrink-0">End Consultation</button>` : ''; let reviewButtonHTML = this.state.consultationEnded ? `<div class="text-center mt-4 p-3 bg-stone-800 rounded-lg flex-shrink-0"><p class="text-sm text-stone-300 mb-2">Thank you!</p><button id="review-btn" class="bg-green-500 text-white font-semibold py-2 px-4 rounded-lg">Leave a Review</button></div>` : ''; return `<div class="${baseClasses}">${timerHTML}<div id="chat-messages" class="flex-grow space-y-4 overflow-y-auto no-scrollbar">${this.state.chatHistory.map(msg => this.renderMessage(msg)).join('')}<div id="typing-indicator" class="hidden flex justify-start"><div class="max-w-xs md:max-w-md p-3 rounded-lg bg-stone-700 rounded-bl-none flex items-center space-x-1.5"><div class="typing-dot w-2 h-2 bg-stone-400 rounded-full"></div><div class="typing-dot w-2 h-2 bg-stone-400 rounded-full"></div><div class="typing-dot w-2 h-2 bg-stone-400 rounded-full"></div></div></div></div>${endButtonHTML}${reviewButtonHTML}<form id="chat-form" class="mt-4 flex gap-2 flex-shrink-0 ${this.state.consultationEnded ? 'hidden' : ''}"><input id="chat-input" type="text" placeholder="Ask your question..." required class="flex-grow p-3 bg-stone-800 border border-stone-600 rounded-lg"><button type="submit" class="bg-yellow-400 text-stone-900 font-bold p-3 rounded-lg">Send</button></form></div>`; },
+            renderMessage(msg, type = 'chat') { const isUser = msg.sender === 'user'; const userClasses = 'bg-indigo-500 text-white rounded-br-none'; const astrologerClasses = 'bg-stone-700 text-stone-200 rounded-bl-none'; const oracleClasses = 'bg-purple-500/20 border border-purple-400/30 text-stone-200 rounded-bl-none'; let senderClasses = astrologerClasses; if(isUser) senderClasses = userClasses; else if (type === 'oracle') senderClasses = oracleClasses; return `<div class="flex ${isUser ? 'justify-end' : 'justify-start'}"><div class="max-w-xs md:max-w-md p-3 rounded-lg ${senderClasses}"><p class="text-sm">${msg.text}</p></div></div>`; },
+            render_tools() { const tools = [{ id: 'tarot', name: 'Tarot Card', icon: '🎴' }, { id: 'crystal_ball', name: 'Crystal Ball', icon: '🔮' }, { id: 'numerology', name: 'Numerology', icon: '🔢' }, { id: 'panchang', name: 'Panchang', icon: '🕉️' }, { id: 'compatibility', name: 'Love Match', icon: '💞' }, { id: 'daily_insight', name: 'Daily Insight', icon: '✨' }, { id: 'wealth_report', name: 'Wealth Report', icon: '💰' }, { id: 'career_report', name: 'Career Report', icon: '📈' }, { id: 'yearly_forecast', name: 'Yearly Forecast', icon: '🗓️' },]; return `<h2 class="text-lg font-semibold text-sky-200 mb-4">Vedic Tools & Calculators</h2><div class="grid grid-cols-2 gap-4">${tools.map(tool => `<button onclick="app.showModal('${tool.id}')" class="text-center p-4 bg-stone-800/50 border border-stone-700 rounded-lg hover:border-indigo-400"><div class="text-4xl mb-2">${tool.icon}</div><h3 class="text-sm font-semibold text-stone-300">${tool.name}</h3></button>`).join('')}</div>`; },
+            render_profile() { const d = this.state.birthDetails; const detailsHTML = d ? `<div class="bg-stone-800/50 p-4 rounded-lg border border-stone-700 space-y-2 text-sm"><p><strong>Name:</strong> ${d.name}</p><p><strong>Phone:</strong> ${d.phone || 'Not set'}</p><p><strong>Birth Date:</strong> ${d.dob}</p><p><strong>Birth Time:</strong> ${d.tob}</p><p><strong>Birth Place:</strong> ${d.pob}</p><button onclick="app.editBirthDetails()" class="text-xs text-yellow-300 hover:underline mt-2">Edit Details</button></div>` : `<div class="text-center p-4 bg-stone-800/50 rounded-lg"><p class="text-stone-300">Your profile is not set.</p><button onclick="app.showModal('birth_details')" class="w-full mt-4 bg-yellow-400 text-stone-900 font-bold py-2 px-4 rounded-lg">Add Details</button></div>`; return `<h2 class="text-lg font-semibold text-sky-200 mb-4">Your Profile</h2> ${detailsHTML}<div class="mt-6 space-y-2"><button onclick="app.showModal('policies')" class="w-full text-left p-3 bg-stone-800 rounded-lg hover:bg-stone-700">Policies & Refunds</button><button onclick="app.showModal('reviews')" class="w-full text-left p-3 bg-stone-800 rounded-lg hover:bg-stone-700">Customer Reviews</button><button onclick="app.reset()" class="w-full text-left p-3 mt-4 bg-red-500/20 text-red-300 rounded-lg hover:bg-red-500/30">Reset & Sign Out</button></div>`; },
+            attachEventListeners() { this.elements.mainTabs.forEach(btn => btn.addEventListener('click', () => this.navigateTo(btn.dataset.tab))); this.elements.modal.container.addEventListener('click', (e) => { if (e.target === this.elements.modal.container) this.hideModal(); }); },
+            attachPageSpecificEventListeners() { const chatForm = document.getElementById('chat-form'); if (chatForm) chatForm.addEventListener('submit', e => { e.preventDefault(); this.handleUserMessage(); }); const oracleForm = document.getElementById('oracle-form'); if (oracleForm) oracleForm.addEventListener('submit', e => { e.preventDefault(); this.handleOracleQuery(); }); const endBtn = document.getElementById('end-consultation-btn'); if(endBtn) endBtn.addEventListener('click', () => this.endConsultation()); const reviewBtn = document.getElementById('review-btn'); if(reviewBtn) reviewBtn.addEventListener('click', () => this.sendWhatsAppReviewRequest()); if (this.state.activeTab === 'chat' && this.state.timerEndTime && !this.state.consultationEnded) this.startTimer(); ['chat-messages', 'oracle-messages'].forEach(id => { const el = document.getElementById(id); if (el) el.scrollTop = el.scrollHeight; }); },
+            navigateTo(tab) { this.state.activeTab = tab; this.render(); },
+            simulateOracleReply() { setTimeout(async () => { const replies = { color: "Your lucky color today is Emerald Green.", career: "Focus on collaboration today.", love: "For love, the stars advise open communication.", default: "The cosmos are vast and mysterious. Your question resonates with the energy of Jupiter." }; const lastQuery = this.state.oracleHistory.filter(m => m.sender === 'user').pop()?.text.toLowerCase() || ''; let replyKey = 'default'; if (lastQuery.includes('color')) replyKey = 'color'; if (lastQuery.includes('career')) replyKey = 'career'; if (lastQuery.includes('love')) replyKey = 'love'; await this.addOracleMessage('oracle', replies[replyKey]); }, 1500 + Math.random() * 1000); },
+            startPaidFlow() { if (!this.state.birthDetails) this.showModal('birth_details', { afterSave: () => this.navigateTo('chat') }); else this.navigateTo('chat'); },
+            editBirthDetails() { this.showModal('birth_details', { isEditing: true }); },
+            showModal(type, options = {}) { const contentRenderer = `renderModal_${type}`; let modalContentHTML = this.renderModal_default(); if (typeof this[contentRenderer] === 'function') modalContentHTML = this[contentRenderer](options); this.elements.modal.content.innerHTML = modalContentHTML; this.elements.modal.container.classList.remove('hidden'); const form = document.getElementById('modal-form'); if (form) form.addEventListener('submit', async (e) => { e.preventDefault(); const formData = new FormData(form); const handler = form.dataset.handler; if (handler && typeof this[handler] === 'function') await this[handler](formData, options); }); },
+            hideModal() { this.elements.modal.container.classList.add('hidden'); this.elements.modal.content.innerHTML = ''; },
+            renderModal_birth_details(options) { const d = options.isEditing ? this.state.birthDetails : {}; return `<h2 class="text-lg font-semibold text-center mb-4 text-sky-200">Enter Your Profile Details</h2><form id="modal-form" data-handler="saveBirthDetails" class="space-y-4"><input type="text" name="name" placeholder="Full Name" required class="w-full p-3 bg-stone-800 border border-stone-600 rounded-lg" value="${d?.name || ''}"><input type="tel" name="phone" placeholder="WhatsApp Number (e.g., 91...)" required class="w-full p-3 bg-stone-800 border border-stone-600 rounded-lg" value="${d?.phone || ''}"><input type="text" onfocus="(this.type='date')" onblur="this.type='text'" name="dob" placeholder="Date of Birth" required class="w-full p-3 bg-stone-800 border border-stone-600 rounded-lg" value="${d?.dob || ''}"><input type="text" onfocus="(this.type='time')" onblur="this.type='text'" name="tob" placeholder="Time of Birth" required class="w-full p-3 bg-stone-800 border border-stone-600 rounded-lg" value="${d?.tob || ''}"><input type="text" name="pob" placeholder="Place of Birth (City, Country)" required class="w-full p-3 bg-stone-800 border border-stone-600 rounded-lg" value="${d?.pob || ''}"><div class="flex gap-2 pt-2"><button type="button" onclick="app.hideModal()" class="w-full bg-stone-600 font-semibold py-3 px-4 rounded-lg">Cancel</button><button type="submit" class="w-full bg-yellow-400 text-stone-900 font-bold py-3 px-4 rounded-lg">Save Details</button></div></form>`;},
+            renderModal_payment() { return `<h2 class="text-lg font-semibold text-center mb-2 text-sky-200">Unlock Full Consultation</h2><p class="text-center text-stone-300 mb-4 text-sm">Please complete the payment to begin your live chat.</p><div class="flex flex-col items-center p-4 bg-white rounded-lg"><img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=upi%3A%2F%2Fpay%3Fpa%3D8302153208%40yespop%26pn%3DPLANETS%2520PREDICTOR" alt="UPI QR Code" class="w-48 h-48 rounded-md"><p class="text-stone-800 text-sm font-semibold mt-2">Scan to Pay</p></div><button onclick="app.completePayment()" class="w-full mt-4 bg-yellow-400 text-stone-900 font-bold py-3 px-4 rounded-lg animate-pulse-zap">Simulate Payment</button>`;},
+            renderModal_daily_insight() { return this.renderToolModal('Daily Cosmic Insight', '✨', this.getDailyHoroscope()); }, renderModal_crystal_ball() { return this.renderToolModal('Crystal Ball', '🔮', 'The mists swirl and reveal a message: "An unexpected opportunity will arise from a recent challenge. Be prepared to act."'); }, renderModal_tarot() { return this.renderToolModal('Tarot Reading', '🎴', 'Your card of the day is The Sun, symbolizing positivity, success, and vitality.'); }, renderModal_numerology() { return this.renderToolModal('Numerology', '🔢', 'Your Life Path number suggests you are a natural leader. (Simulated).'); }, renderModal_panchang() { return this.renderToolModal('Panchang', '🕉️', "Today's Tithi is Shukla Paksha, Dashami. Auspicious for new ventures. (Simulated)."); }, renderModal_policies() { return `<div class="text-sm space-y-4"><h3 class="font-bold text-yellow-300">Confidentiality Policy</h3><p class="text-stone-300">All personal information and consultation details are 100% confidential.</p><h3 class="font-bold text-yellow-300">1-Hour Response Guarantee</h3><p class="text-stone-300">We guarantee a personalized response within one hour of your question submission. If we fail, you are eligible for a full refund.</p><h3 class="font-bold text-yellow-300">Refund Policy</h3><p class="text-stone-300">Refunds are issued for service failures or major technical issues, not for change of mind.</p><button onclick="app.hideModal()" class="w-full bg-stone-600 font-semibold py-2 px-4 rounded-lg mt-4">Close</button></div>`; },
+            renderModal_reviews() { return `<div class="text-sm space-y-4"><div class="border-b border-stone-700 pb-3"><p class="text-stone-300">"Incredibly accurate reading and the 1-hour guarantee is amazing!"</p><div class="flex items-center justify-between mt-2"><span class="font-semibold text-sky-300">- Ananya S.</span><span class="text-xs text-stone-400">★★★★★</span></div></div><div><p class="text-stone-300">"Fast, detailed, and compassionate. Highly recommended."</p><div class="flex items-center justify-between mt-2"><span class="font-semibold text-sky-300">- Rohan M.</span><span class="text-xs text-stone-400">★★★★★</span></div></div><button onclick="app.hideModal()" class="w-full bg-stone-600 font-semibold py-2 px-4 rounded-lg mt-4">Close</button></div>`; },
+            renderModal_default() { return `<div class="text-center"><h2 class="text-lg font-semibold text-sky-200 mb-2">Coming Soon</h2><p class="text-stone-300 mb-4">This feature is under development.</p><button onclick="app.hideModal()" class="w-full mt-4 bg-stone-600 py-2 rounded-lg">Close</button></div>`; },
+            renderToolModal(title, icon, text) { return `<div class="text-center"><div class="text-6xl mb-4">${icon}</div><h2 class="text-lg font-semibold text-sky-200 mb-2">${title}</h2><p class="text-stone-300 mb-4">${text}</p><button onclick="app.hideModal()" class="w-full bg-stone-600 font-semibold py-2 px-4 rounded-lg">Close</button></div>`; },
+            showNotification(text) { this.elements.notification.text.textContent = text; this.elements.notification.banner.classList.remove('hidden'); this.elements.notification.banner.classList.add('notification-animation'); setTimeout(() => { this.elements.notification.banner.classList.add('hidden'); this.elements.notification.banner.classList.remove('notification-animation'); }, 4000); },
+            async startTimer() { if (this.timerInterval) clearInterval(this.timerInterval); const timerEl = document.getElementById('timer'); if(!timerEl || !this.state.timerEndTime) return; const update = async () => { const remaining = this.state.timerEndTime - Date.now(); if (remaining <= 0) { clearInterval(this.timerInterval); timerEl.textContent = "EXPIRED"; return; } const minutes = Math.floor((remaining / 1000 / 60) % 60).toString().padStart(2, '0'); const seconds = Math.floor((remaining / 1000) % 60).toString().padStart(2, '0'); timerEl.textContent = `${minutes}:${seconds}`; if (Math.floor(remaining / 1000 / 60) < 15 && !this.state.reminderSent) { this.simulateWhatsappNotification(`Reminder: Your answer will arrive in the app within 15 minutes!`); this.state.reminderSent = true; await this.saveStateToSupabase(); } }; update(); this.timerInterval = setInterval(update, 1000); },
+            simulateWhatsappNotification(message) { if(this.state.birthDetails && this.state.birthDetails.phone) { console.log(`%c[WHATSAPP SIMULATION]`, 'color: #25D366; font-weight: bold;', `\nTo: ${this.state.birthDetails.phone}\nMessage: ${message}`); } },
+            sendWhatsAppReviewRequest() { if (!this.state.birthDetails.phone) return; const message = `Thank you for your consultation with PLANETS PREDICTOR! We would be grateful if you could share your experience. Please reply with your review.\n\nUser ID: ${this.state.userId}`; window.open(`https://wa.me/${this.state.birthDetails.phone}?text=${encodeURIComponent(message)}`, '_blank'); },
+            getDailyHoroscope() { return "Today, the Moon's transit encourages you to express your ideas clearly. It's a favorable day for heartfelt conversations."; },
+            generateUUID() { return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => { const r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8); return v.toString(16); }); },
+        };
+        window.addEventListener('DOMContentLoaded', () => app.init());
+    </script>
+
+</body>
+</html>
+
