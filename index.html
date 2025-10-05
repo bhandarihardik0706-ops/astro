@@ -6,24 +6,39 @@
     <title>PLANETS PREDICTOR</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Inter', sans-serif; background-color: #0c0a09; color: #f3f4f6; }
-        @keyframes background-slideshow {
-            0%, 100% { background-image: linear-gradient(rgba(12, 10, 9, 0.8), rgba(12, 10, 9, 0.95)), url('https://images.unsplash.com/photo-1534796636912-3b95b3ab5986?q=80&w=2071&auto-format&fit=crop'); opacity: 1; }
-            25% { background-image: linear-gradient(rgba(12, 10, 9, 0.8), rgba(12, 10, 9, 0.95)), url('https://images.unsplash.com/photo-1506443432602-ac2fcd6f54e0?q=80&w=2070&auto-format&fit=crop'); }
-            50% { background-image: linear-gradient(rgba(12, 10, 9, 0.8), rgba(12, 10, 9, 0.95)), url('https://images.unsplash.com/photo-1614926857242-73c3d5f4b574?q=80&w=2070&auto-format&fit=crop'); }
-            75% { background-image: linear-gradient(rgba(12, 10, 9, 0.8), rgba(12, 10, 9, 0.95)), url('https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?q=80&w=2072&auto-format&fit=crop'); }
+    <!-- Font will be loaded dynamically -->
+    <style id="dynamic-styles">
+        /* Base styles */
+        body { background-color: #0c0a09; color: #f3f4f6; }
+        .font-cinzel { font-family: 'Cinzel', serif; }
+        
+        /* Dynamic theme color will be injected here */
+        :root {
+            --theme-color: #FBBF24; /* Default yellow-400 */
         }
-        body::before {
-            content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;
+
+        /* Animations */
+        @keyframes background-slideshow {
+            0%, 100% { background-image: var(--bg-image-1); opacity: 1; }
+            25% { background-image: var(--bg-image-2); }
+            50% { background-image: var(--bg-image-3); }
+            75% { background-image: var(--bg-image-4); }
+        }
+        #background-container {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;
+            opacity: 0; /* Initially hidden */
+            transition: opacity 1.5s ease-in;
             background-size: cover; background-position: center; background-attachment: fixed;
+        }
+        #background-container.loaded {
+            opacity: 1;
             animation: background-slideshow 40s linear infinite;
         }
-        .font-cinzel { font-family: 'Cinzel', serif; }
-        @keyframes pulse-zap { 0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(250, 204, 21, 0.7); } 50% { transform: scale(1.05); box-shadow: 0 0 20px 10px rgba(250, 204, 21, 0); } }
+        @keyframes pulse-zap { 0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.7); } 50% { transform: scale(1.05); box-shadow: 0 0 20px 10px rgba(251, 191, 36, 0); } }
         .animate-pulse-zap { animation: pulse-zap 2s infinite; }
         @keyframes slide-in-up { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
         .animate-slide-in-up { animation: slide-in-up 0.6s ease-out forwards; }
@@ -32,14 +47,33 @@
         @keyframes typing-dot { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1.0); } }
         .typing-dot { animation: typing-dot 1.4s infinite ease-in-out both; }
         .typing-dot:nth-child(1) { animation-delay: -0.32s; } .typing-dot:nth-child(2) { animation-delay: -0.16s; }
-        input[type="date"], input[type="time"] { color-scheme: dark; }
-        input, textarea { color: #e5e7eb; } ::placeholder { color: #6b7280; opacity: 1; }
+        
+        /* Utilities & Fixes */
+        input, select { color-scheme: dark; }
+        input, textarea, select { color: #e5e7eb; } ::placeholder { color: #6b7280; opacity: 1; }
         .no-scrollbar::-webkit-scrollbar { display: none; } .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* Mobile Nav Fix */
+        #app-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh; /* Full height on mobile */
+        }
+        @media (min-width: 640px) {
+            #app-container {
+                height: 85vh;
+                max-height: 900px;
+            }
+        }
     </style>
 </head>
-<body class="flex items-center justify-center min-h-screen sm:p-4 text-white">
+<body class="flex items-center justify-center sm:p-4 text-white">
+    <!-- Immediate background -->
+    <div id="background-placeholder" style="position:fixed; top:0; left:0; width:100%; height:100%; z-index:-2; background-size:cover; background-position:center; filter:blur(10px); background-image: url('https://images.unsplash.com/photo-1534796636912-3b95-b3ab5986?q=10&w=400');"></div>
+    <div id="background-container"></div>
 
-    <div id="app-container" class="relative w-full max-w-md h-screen sm:h-[85vh] sm:max-h-[900px] flex flex-col bg-stone-900/60 backdrop-blur-2xl border border-stone-700 sm:rounded-2xl shadow-2xl shadow-yellow-500/5 overflow-hidden animate-slide-in-up">
+
+    <div id="app-container" class="relative w-full max-w-md bg-stone-900/60 backdrop-blur-2xl border border-stone-700 sm:rounded-2xl shadow-2xl shadow-yellow-500/5 overflow-hidden animate-slide-in-up">
         <div id="loading-overlay" class="absolute inset-0 bg-stone-900/80 backdrop-blur-sm z-50 flex flex-col items-center justify-center hidden">
             <div class="w-16 h-16 border-4 border-yellow-400 border-t-transparent rounded-full animate-spin"></div>
             <p class="mt-4 text-lg">Connecting to Cosmos...</p>
@@ -48,25 +82,31 @@
             <p id="notification-text"></p>
         </div>
         <header class="p-5 border-b border-stone-700 text-center flex-shrink-0">
-            <h1 class="text-3xl font-bold tracking-wider text-yellow-300 font-cinzel">PLANETS PREDICTOR</h1>
+            <h1 class="text-3xl font-bold tracking-wider font-cinzel" style="color: var(--theme-color);">PLANETS PREDICTOR</h1>
             <p class="text-sm text-stone-400 mt-1">Your Cosmic Guide to Clarity</p>
         </header>
+
         <main class="flex-grow overflow-y-auto no-scrollbar"><div id="page-content" class="p-6"></div></main>
+        
         <nav class="flex border-t border-stone-600 bg-stone-900/70 backdrop-blur-sm flex-shrink-0">
-            <button data-tab="chart" class="main-tab-btn flex-1 p-3 text-sm font-semibold text-yellow-300 flex flex-col items-center justify-center gap-1">
-                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="3"></circle><line x1="12" y1="2" x2="12" y2="5"></line><line x1="12" y1="19" x2="12" y2="22"></line><line x1="2" y1="12" x2="5" y2="12"></line><line x1="19" y1="12" x2="22" y2="12"></line></svg>
-                <span>Oracle</span>
+            <button data-tab="today" class="main-tab-btn flex-1 p-3 text-sm font-semibold flex flex-col items-center justify-center gap-1" style="color: var(--theme-color);">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"></path><circle cx="12" cy="12" r="4"></circle></svg>
+                <span>Today</span>
+            </button>
+             <button data-tab="predictions" class="main-tab-btn flex-1 p-3 text-sm font-semibold text-stone-400 flex flex-col items-center justify-center gap-1">
+                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2Z"></path><path d="m16.2 7.8-1.5-1.5-3.3 3.3-3.3-3.3-1.5 1.5 3.3 3.3-3.3 3.3 1.5 1.5 3.3-3.3 3.3 3.3 1.5-1.5-3.3-3.3Z"></path></svg>
+                <span>Predictions</span>
             </button>
             <button data-tab="chat" class="main-tab-btn flex-1 p-3 text-sm font-semibold text-stone-400 flex flex-col items-center justify-center gap-1">
-                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15.5 16.5 22 3l-3-3-3.5 2.5"></path><path d="m14 6-1-1L2 16l3 3 11-11Z"></path><path d="M9 12H2"></path><path d="m15 6 3.5 2.5"></path></svg>
+                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
                 <span>Astrologer</span>
             </button>
             <button data-tab="tools" class="main-tab-btn flex-1 p-3 text-sm font-semibold text-stone-400 flex flex-col items-center justify-center gap-1">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18"></path><path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path><path d="M12 22A10 10 0 1 0 2 12"></path></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"></path><path d="M5 3v4"></path><path d="M19 17v4"></path><path d="M3 5h4"></path><path d="M17 19h4"></path></svg>
                 <span>Tools</span>
             </button>
              <button data-tab="profile" class="main-tab-btn flex-1 p-3 text-sm font-semibold text-stone-400 flex flex-col items-center justify-center gap-1">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2Z"></path><path d="M12 12a5 5 0 1 0 5-5 5 5 0 0 0-5 5Z"></path><path d="M12 12a10 9.4 0 0 0-10 9 10 10 0 0 0 20 0 10 9.4 0 0 0-10-9Z"></path></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
                 <span>Profile</span>
             </button>
         </nav>
@@ -90,223 +130,151 @@
                 modal: { container: document.getElementById('modal-container'), content: document.getElementById('modal-content') }
             },
             state: {},
+            content: {},
             timerInterval: null,
+            sound: { 
+                isMuted: true,
+                drone: null,
+                synth: null,
+                init() {
+                    try {
+                        this.drone = new Tone.AMOscillator("F2", "sine", "sine").toDestination();
+                        this.synth = new Tone.PolySynth(Tone.Synth).toDestination();
+                        this.synth.set({
+                            oscillator: { type: "fatsine" },
+                            envelope: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 0.5 }
+                        });
+                    } catch (e) { console.error("Audio context not started.", e); }
+                },
+                play(note, duration = '8n') {
+                    if (this.isMuted) return;
+                    if (!this.synth) this.init();
+                    try {
+                        Tone.start();
+                        this.synth.triggerAttackRelease(note, duration);
+                    } catch (e) { console.error("Could not play sound.", e); }
+                }
+            },
+            
             async init() {
                 this.showLoading();
                 this.attachEventListeners();
+                await this.loadRemoteConfig();
                 await this.loadStateFromSupabase();
                 this.render();
                 this.startRealtimeUpdates();
                 this.hideLoading();
             },
-            getDefaultState() {
-                return {
-                    userId: localStorage.getItem('planetsPredictorUserId') || this.generateUUID(),
-                    activeTab: 'chart',
-                    birthDetails: null,
-                    hasPaid: false,
-                    chatHistory: [],
-                    timerEndTime: null,
-                    reminderSent: false,
-                    consultationEnded: false,
-                    oracleHistory: []
-                };
+
+            async loadRemoteConfig() {
+                const { data: appearanceData, error: appearanceError } = await supabaseClient.from('site_appearance').select('*').eq('id', 1).single();
+                if (appearanceError) console.error("Could not load site appearance:", appearanceError);
+                else this.applyAppearance(appearanceData);
+                
+                const { data: contentData, error: contentError } = await supabaseClient.from('app_content').select('*');
+                if (contentError) console.error("Could not load site content:", contentError);
+                else { this.content = contentData.reduce((acc, item) => { acc[item.content_key] = item.content_value; return acc; }, {}); }
             },
-            async loadStateFromSupabase() {
-                let userId = localStorage.getItem('planetsPredictorUserId');
-                if (!userId) {
-                    userId = this.generateUUID();
-                    localStorage.setItem('planetsPredictorUserId', userId);
-                }
 
-                const { data, error } = await supabaseClient.from('users').select('*').eq('user_id', userId).single();
-
-                if (data) {
-                    // Map from snake_case (DB) to camelCase (app state)
-                    this.state = {
-                        userId: data.user_id,
-                        activeTab: this.state.activeTab || 'chart', // Persist tab locally
-                        birthDetails: {
-                            name: data.name,
-                            phone: data.phone,
-                            dob: data.dob,
-                            tob: data.tob,
-                            pob: data.pob
-                        },
-                        hasPaid: data.has_paid,
-                        chatHistory: data.chat_history || [],
-                        oracleHistory: data.oracle_history || [],
-                        timerEndTime: data.timer_end_time ? new Date(data.timer_end_time).getTime() : null,
-                        reminderSent: data.reminder_sent,
-                        consultationEnded: data.consultation_ended,
-                    };
-                } else {
-                    this.state = this.getDefaultState();
-                    if (error && error.code !== 'PGRST116') console.error("Error loading user state:", error);
-                }
-            },
-            async saveStateToSupabase() {
-                const userId = this.state.userId;
-                if (!userId) { console.error("Cannot save state without a user ID."); return; }
-
-                // Map from camelCase (app state) to snake_case (DB)
-                const userData = {
-                    user_id: userId,
-                    name: this.state.birthDetails?.name,
-                    phone: this.state.birthDetails?.phone,
-                    dob: this.state.birthDetails?.dob,
-                    tob: this.state.birthDetails?.tob,
-                    pob: this.state.birthDetails?.pob,
-                    has_paid: this.state.hasPaid,
-                    chat_history: this.state.chatHistory,
-                    oracle_history: this.state.oracleHistory,
-                    timer_end_time: this.state.timerEndTime ? new Date(this.state.timerEndTime).toISOString() : null,
-                    reminder_sent: this.state.reminderSent,
-                    consultation_ended: this.state.consultationEnded,
-                    status: this.determineStatus()
-                };
-
-                const { error } = await supabaseClient.from('users').upsert(userData, { onConflict: 'user_id' });
-                if (error) console.error("Error saving user state:", error);
-            },
-            startRealtimeUpdates() {
-                supabaseClient.channel('public:users')
-                    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'users', filter: `user_id=eq.${this.state.userId}` }, payload => {
-                        console.log('Realtime update received!', payload);
-                        const updatedData = payload.new;
-                        // Check if the update came from an admin reply
-                        if(updatedData.chat_history.length > this.state.chatHistory.length) {
-                           this.showNotification("The astrologer has replied!");
-                           this.simulateWhatsappNotification(`The astrologer has answered your query in the app.`);
+            applyAppearance(settings) {
+                if (!settings) return;
+                const fontLink = document.createElement('link');
+                fontLink.href = `https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=${settings.font_family.replace(' ', '+')}:wght@400;700&display=swap`;
+                fontLink.rel = 'stylesheet';
+                document.head.appendChild(fontLink);
+                document.body.style.fontFamily = `'${settings.font_family}', sans-serif`;
+                document.documentElement.style.setProperty('--theme-color', settings.theme_color);
+                const images = settings.background_slideshow_images || [];
+                if (images.length > 0) {
+                    images.forEach((url, index) => {
+                        if (index < 4) { // Only use up to 4 images
+                            const img = new Image();
+                            img.onload = () => {
+                                document.documentElement.style.setProperty(`--bg-image-${index + 1}`, `linear-gradient(rgba(12, 10, 9, 0.8), rgba(12, 10, 9, 0.95)), url('${url}')`);
+                                if (index === images.length - 1 || index === 3) {
+                                    document.getElementById('background-container').classList.add('loaded');
+                                }
+                            };
+                            img.src = url;
                         }
-                        this.loadStateFromSupabase().then(() => this.render());
-                    })
-                    .subscribe();
+                    });
+                }
             },
-            determineStatus() {
-                if (this.state.consultationEnded) return 'Resolved';
-                if (this.state.chatHistory.length > 0) return 'Active Chat';
-                if (this.state.birthDetails) return 'New User';
-                return 'Guest';
-            },
+
+            getDefaultState() { return { userId: localStorage.getItem('planetsPredictorUserId') || this.generateUUID(), activeTab: 'today', birthDetails: null, hasPaid: false, chatHistory: [], timerEndTime: null, reminderSent: false, consultationEnded: false }; },
+            async loadStateFromSupabase() { let userId = localStorage.getItem('planetsPredictorUserId'); if (!userId) { userId = this.generateUUID(); localStorage.setItem('planetsPredictorUserId', userId); } const { data, error } = await supabaseClient.from('users').select('*').eq('user_id', userId).single(); if (data) { this.state = { userId: data.user_id, activeTab: this.state.activeTab || 'today', birthDetails: (data.name ? { name: data.name, phone: data.phone, dob: data.dob, tob: data.tob, pob: data.pob } : null), hasPaid: data.has_paid, chatHistory: data.chat_history || [], timerEndTime: data.timer_end_time ? new Date(data.timer_end_time).getTime() : null, reminderSent: data.reminder_sent, consultationEnded: data.consultation_ended, razorpayPaymentId: data.razorpay_payment_id }; } else { this.state = this.getDefaultState(); if (error && error.code !== 'PGRST116') console.error("Error loading user state:", error); } },
+            async saveStateToSupabase() { const userId = this.state.userId; if (!userId) return; const userData = { user_id: userId, name: this.state.birthDetails?.name, phone: this.state.birthDetails?.phone, dob: this.state.birthDetails?.dob, tob: this.state.birthDetails?.tob, pob: this.state.birthDetails?.pob, has_paid: this.state.hasPaid, chat_history: this.state.chatHistory, timer_end_time: this.state.timerEndTime ? new Date(this.state.timerEndTime).toISOString() : null, reminder_sent: this.state.reminderSent, consultation_ended: this.state.consultationEnded, status: this.determineStatus(), razorpay_payment_id: this.state.razorpayPaymentId }; const { error } = await supabaseClient.from('users').upsert(userData, { onConflict: 'user_id' }); if (error) console.error("Error saving user state:", error); },
+            startRealtimeUpdates() { supabaseClient.channel('public:users').on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'users', filter: `user_id=eq.${this.state.userId}` }, payload => { const updatedData = payload.new; if(this.state.chatHistory && updatedData.chat_history.length > this.state.chatHistory.length) { this.sound.play("C5"); this.showNotification("The astrologer has replied!"); this.simulateWhatsappNotification(`The astrologer has answered your query.`); } this.loadStateFromSupabase().then(() => this.render()); }).subscribe(); },
+            determineStatus() { if (this.state.consultationEnded) return 'Resolved'; if (this.state.chatHistory && this.state.chatHistory.length > 0) return 'Active Chat'; if (this.state.birthDetails) return 'New User'; return 'Guest'; },
+            
             render() {
                 this.updateActiveTabUI();
                 const pageContentEl = this.elements.pageContent;
                 pageContentEl.className = 'p-6';
-                if (['chat', 'chart'].includes(this.state.activeTab)) pageContentEl.className = 'p-0 h-full flex flex-col';
+                if (['chat', 'today', 'predictions'].includes(this.state.activeTab)) pageContentEl.className = 'p-0 h-full flex flex-col';
+                
                 const renderer = `render_${this.state.activeTab}`;
-                if (typeof this[renderer] === 'function') this.elements.pageContent.innerHTML = this[renderer]();
+                if (typeof this[renderer] === 'function') {
+                    this.elements.pageContent.innerHTML = this[renderer]();
+                } else {
+                    this.elements.pageContent.innerHTML = `<p>Coming Soon</p>`;
+                }
                 this.attachPageSpecificEventListeners();
             },
             
-            async handleUserMessage() {
-                const input = document.getElementById('chat-input');
-                if (input.value.trim()) {
-                    await this.addMessage('user', input.value.trim());
-                    input.value = '';
-                }
-            },
-            async handleOracleQuery() {
-                const input = document.getElementById('oracle-input');
-                if (input.value.trim()) {
-                    await this.addOracleMessage('user', input.value.trim());
-                    input.value = '';
-                }
-            },
-            async addMessage(sender, text) {
-                this.state.chatHistory.push({ sender, text, timestamp: Date.now() });
-                if (sender === 'user' && this.state.chatHistory.filter(m => m.sender === 'user').length === 1) {
-                    this.state.timerEndTime = Date.now() + 3600 * 1000;
-                    this.simulateWhatsappNotification('Your 1-hour guaranteed chat session has started!');
-                }
-                await this.saveStateToSupabase();
-                this.render();
-                if (sender === 'user') this.simulateAstrologerReply();
-            },
-            async addOracleMessage(sender, text) {
-                this.state.oracleHistory.push({ sender, text, timestamp: Date.now() });
-                await this.saveStateToSupabase();
-                this.render();
-                if (sender === 'user') this.simulateOracleReply();
-            },
-            async simulateAstrologerReply() {
-                const typingIndicator = document.getElementById('typing-indicator');
-                if(typingIndicator) typingIndicator.classList.remove('hidden');
-                setTimeout(async () => {
-                    if(typingIndicator) typingIndicator.classList.add('hidden');
-                    const replies = ["Thank you for sharing. One moment...", "Interesting point. Let me consult the charts.", "I see. This connects to your Saturn transit."];
-                    const reply = replies[Math.floor(Math.random() * replies.length)];
-                    await this.addMessage('astrologer', reply);
-                    this.showNotification("The astrologer has replied!");
-                    this.simulateWhatsappNotification(`The astrologer has answered your query in the app.`);
-                }, 3000 + Math.random() * 3000);
-            },
-            async endConsultation() {
-                this.state.consultationEnded = true;
-                if(this.timerInterval) clearInterval(this.timerInterval);
-                await this.addMessage('astrologer', 'Thank you for the session. The chat has ended.');
-                await this.saveStateToSupabase();
-                this.render();
-            },
-            async saveBirthDetails(formData, options = {}) {
-                this.state.birthDetails = {
-                    name: formData.get('name'), phone: formData.get('phone'),
-                    dob: formData.get('dob'), tob: formData.get('tob'), pob: formData.get('pob')
-                };
-                this.state.oracleHistory = [];
-                await this.saveStateToSupabase();
-                this.simulateWhatsappNotification(`Welcome, ${this.state.birthDetails.name}! Your cosmic blueprint is ready.`);
-                this.hideModal();
-                if (options.afterSave) options.afterSave();
-                else this.render();
-            },
-            async completePayment() {
-                this.state.hasPaid = true;
-                await this.saveStateToSupabase();
-                this.simulateWhatsappNotification('Payment successful! Your direct line to our astrologer is open.');
-                this.hideModal();
-                this.navigateTo('chat');
-            },
+            updateActiveTabUI() { this.elements.mainTabs.forEach(btn => { const is_active = btn.dataset.tab === this.state.activeTab; btn.style.color = is_active ? 'var(--theme-color)' : '#9ca3af'; }); },
+
+            attachEventListeners() { this.elements.mainTabs.forEach(btn => { btn.addEventListener('click', () => this.navigateTo(btn.dataset.tab)); }); this.elements.modal.container.addEventListener('click', (e) => { if (e.target === this.elements.modal.container) this.hideModal(); }); },
+            attachPageSpecificEventListeners() { const chatForm = document.getElementById('chat-form'); if (chatForm) chatForm.addEventListener('submit', e => { e.preventDefault(); this.handleUserMessage(); }); const endBtn = document.getElementById('end-consultation-btn'); if(endBtn) endBtn.addEventListener('click', () => this.endConsultation()); const reviewBtn = document.getElementById('review-btn'); if(reviewBtn) reviewBtn.addEventListener('click', () => this.sendWhatsAppReviewRequest()); const compatibilityForm = document.getElementById('compatibility-form'); if(compatibilityForm) compatibilityForm.addEventListener('submit', (e) => { e.preventDefault(); const formData = new FormData(compatibilityForm); const sign1 = formData.get('sign1'); const sign2 = formData.get('sign2'); const result = this.getCompatibility(sign1, sign2); const resultEl = document.getElementById('compatibility-result'); this.sound.play('G4', '4n'); resultEl.innerHTML = `<div class="bg-white/5 p-3 rounded-lg text-center"><strong>Result:</strong> A <span style="color:var(--theme-color)">${result}</span> compatibility match.<p class="mt-2 text-stone-300">${this.content['love_compatibility_' + result]}</p></div>`; }); if (this.state.activeTab === 'chat' && this.state.timerEndTime && !this.state.consultationEnded) this.startTimer(); ['chat-messages'].forEach(id => { const el = document.getElementById(id); if (el) el.scrollTop = el.scrollHeight; }); if (this.state.activeTab === 'predictions') this.fetchAndRenderPredictions(); },
+            navigateTo(tab) { this.sound.play('A4', '16n'); this.state.activeTab = tab; this.render(); },
+            async handleUserMessage() { const input = document.getElementById('chat-input'); if (input.value.trim()) { this.sound.play('C4', '8n'); await this.addMessage('user', input.value.trim()); input.value = ''; } },
+
+            // --- RENDERERS ---
+            render_today() { if (!this.state.birthDetails) { return `<div class="p-6 text-center space-y-4"><h2 class="text-xl font-semibold text-sky-200">Welcome, Seeker</h2><p>Please provide your birth details on the Profile tab to unlock your personalized daily readings.</p><button onclick="app.navigateTo('profile')" class="font-bold py-3 px-5 rounded-lg transition-colors text-stone-900" style="background-color: var(--theme-color);">Go to Profile</button></div>`; } const panchang = this.calculatePanchang(new Date()); const sunSign = this.getSunSign(new Date(this.state.birthDetails.dob)); return `<div class="p-6 space-y-6"><div class="bg-white/5 backdrop-blur-sm border border-white/10 p-4 rounded-xl"><h2 class="font-bold text-lg mb-2" style="color: var(--theme-color);">Daily Horoscope for ${sunSign}</h2><p class="text-sm text-stone-300">Today's cosmic energies suggest a focus on communication. Your words carry extra weight, so choose them wisely. An unexpected conversation could open a new door. Financially, caution is advised.</p></div><div class="bg-white/5 backdrop-blur-sm border border-white/10 p-4 rounded-xl"><h2 class="font-bold text-lg mb-3" style="color: var(--theme-color);">Today's Panchang - Jaipur</h2><div class="grid grid-cols-2 gap-3 text-sm"><div><strong>Tithi:</strong> ${panchang.tithi}</div><div><strong>Nakshatra:</strong> ${panchang.nakshatra}</div><div><strong>Sunrise:</strong> ${panchang.sunrise}</div><div><strong>Sunset:</strong> ${panchang.sunset}</div><div class="col-span-2 mt-2 pt-2 border-t border-white/10"><p class="text-red-400"><strong>Rahu Kaal:</strong> ${panchang.rahuKaal}</p><p class="text-green-400"><strong>Abhijit Muhurat:</strong> ${panchang.abhijit}</p></div></div></div></div>`; },
+            render_chat() { const baseClasses = "p-6 h-full flex flex-col"; if (!this.state.birthDetails) { return `<div class="p-6 text-center space-y-4"><p>Please provide your birth details on the Profile tab to begin.</p><button onclick="app.navigateTo('profile')" class="font-bold py-2 px-4 rounded-lg text-stone-900" style="background-color: var(--theme-color);">Go to Profile</button></div>`; } if (!this.state.hasPaid) { return `<div class="p-6 text-center space-y-4"><p>Your chat is locked. Please complete the payment to connect with an astrologer.</p><button onclick="app.initiatePayment()" class="font-bold py-3 px-4 rounded-lg animate-pulse-zap text-stone-900" style="background-color: var(--theme-color);">Pay Now to Unlock Chat</button></div>`; } let timerHTML = this.state.timerEndTime && !this.state.consultationEnded ? `<div class="bg-stone-800 p-2 rounded-lg text-center my-4 flex-shrink-0"><div id="timer" class="text-3xl font-bold tracking-widest" style="color: var(--theme-color);">--:--</div><p class="text-xs text-stone-400 mt-1">RESPONSE GUARANTEE</p></div>` : ''; let endButtonHTML = (this.state.chatHistory || []).some(m => m.sender === 'astrologer') && !this.state.consultationEnded ? `<button id="end-consultation-btn" class="w-full mt-4 bg-red-500/80 text-white font-semibold py-2 px-4 rounded-lg text-sm flex-shrink-0">End Consultation</button>` : ''; let reviewButtonHTML = this.state.consultationEnded ? `<div class="text-center mt-4 p-3 bg-stone-800 rounded-lg flex-shrink-0"><p class="text-sm text-stone-300 mb-2">Thank you!</p><button id="review-btn" class="bg-green-500 text-white font-semibold py-2 px-4 rounded-lg">Leave a Review</button></div>` : ''; return `<div class="${baseClasses}">${timerHTML}<div id="chat-messages" class="flex-grow space-y-4 overflow-y-auto no-scrollbar">${(this.state.chatHistory || []).map(msg => this.renderMessage(msg)).join('')}<div id="typing-indicator" class="hidden flex justify-start"><div class="max-w-xs md:max-w-md p-3 rounded-lg bg-stone-700 rounded-bl-none flex items-center space-x-1.5"><div class="typing-dot w-2 h-2 bg-stone-400 rounded-full"></div><div class="typing-dot w-2 h-2 bg-stone-400 rounded-full"></div><div class="typing-dot w-2 h-2 bg-stone-400 rounded-full"></div></div></div></div>${endButtonHTML}${reviewButtonHTML}<form id="chat-form" class="mt-4 flex gap-2 flex-shrink-0 ${this.state.consultationEnded ? 'hidden' : ''}"><input id="chat-input" type="text" placeholder="Ask your question..." required class="flex-grow p-3 bg-stone-800 border border-stone-600 rounded-lg"><button type="submit" class="font-bold p-3 rounded-lg text-stone-900" style="background-color: var(--theme-color);">Send</button></form></div>`; },
+            renderMessage(msg) { const isUser = msg.sender === 'user'; const userClasses = 'bg-indigo-500 text-white rounded-br-none'; const astrologerClasses = 'bg-stone-700 text-stone-200 rounded-bl-none'; return `<div class="flex ${isUser ? 'justify-end' : 'justify-start'}"><div class="max-w-xs md:max-w-md p-3 rounded-lg ${isUser ? userClasses : astrologerClasses}"><p class="text-sm">${msg.text}</p></div></div>`; },
+            render_tools() { const tools = [{ id: 'numerology', name: 'Numerology', icon: '🔢' }, { id: 'compatibility', name: 'Love Match', icon: '💞' }, { id: 'tarot', name: 'Tarot Card', icon: '🎴' }, { id: 'crystal_ball', name: 'Crystal Ball', icon: '🔮' }]; return `<h2 class="text-lg font-semibold text-sky-200 mb-4">Vedic Tools & Calculators</h2><div class="grid grid-cols-2 gap-4">${tools.map(tool => `<button onclick="app.showModal('${tool.id}')" class="text-center p-4 bg-white/5 border border-white/10 rounded-lg hover:border-yellow-400/50 transition-colors"><div class="text-4xl mb-2">${tool.icon}</div><h3 class="text-sm font-semibold text-stone-300">${tool.name}</h3></button>`).join('')}</div>`;},
+            render_profile() { const d = this.state.birthDetails; const detailsHTML = d ? `<div class="bg-white/5 p-4 rounded-lg border border-white/10 space-y-2 text-sm"><p><strong>Name:</strong> ${d.name}</p><p><strong>Phone:</strong> ${d.phone || 'Not set'}</p><p><strong>Birth Date:</strong> ${d.dob}</p><p><strong>Birth Time:</strong> ${d.tob}</p><p><strong>Birth Place:</strong> ${d.pob}</p><button onclick="app.editBirthDetails()" class="text-xs mt-2" style="color: var(--theme-color);">Edit Details</button></div>` : `<div class="text-center p-4 bg-white/5 rounded-lg"><p class="text-stone-300">Your profile is not set.</p><button onclick="app.showModal('birth_details')" class="w-full mt-4 font-bold py-2 px-4 rounded-lg text-stone-900" style="background-color: var(--theme-color);">Add Details</button></div>`; return `<h2 class="text-lg font-semibold text-sky-200 mb-4">Your Profile</h2> ${detailsHTML}<div class="mt-6 space-y-2"><button onclick="app.showModal('policies')" class="w-full text-left p-3 bg-stone-800 rounded-lg hover:bg-stone-700">Policies & Refunds</button><button onclick="app.showModal('reviews')" class="w-full text-left p-3 bg-stone-800 rounded-lg hover:bg-stone-700">Customer Reviews</button><button onclick="app.reset()" class="w-full text-left p-3 mt-4 bg-red-500/20 text-red-300 rounded-lg hover:bg-red-500/30">Reset & Sign Out</button></div>`; },
+            render_predictions() { return `<div class="p-6"> <h2 class="text-xl md:text-2xl font-bold mb-4 text-sky-200">Cosmic Event Predictions</h2> <div id="predictions-container" class="space-y-4"> <p>Loading future events...</p> </div> </div>`; },
+            async fetchAndRenderPredictions() { const container = document.getElementById('predictions-container'); const { data, error } = await supabaseClient.from('predictions').select('*').order('event_date', { ascending: true }); if (error || !data) { container.innerHTML = `<p>Could not load predictions at this time.</p>`; return; } container.innerHTML = data.map(event => { const eventDate = new Date(event.event_date); const formattedDate = eventDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' }); return ` <div class="bg-white/5 border border-white/10 p-4 rounded-lg"> <p class="text-sm font-bold" style="color: var(--theme-color);">${formattedDate}</p> <h3 class="font-semibold text-lg mt-1">${event.event_title}</h3> <p class="text-sm text-stone-300 mt-2">${event.description}</p> </div> `; }).join(''); },
+            renderModal_policies() { return `<div class="text-sm space-y-4"><p class="text-stone-300">${this.content.policies_text || 'Policies not loaded.'}</p><button onclick="app.hideModal()" class="w-full bg-stone-600 font-semibold py-2 px-4 rounded-lg mt-4">Close</button></div>`; },
+            renderModal_reviews() { try { const data = JSON.parse(this.content.reviews_text); return `<div class="text-sm space-y-4">${data.reviews.map(r => `<div class="border-b border-stone-700 pb-3"><p class="text-stone-300">"${r.comment}"</p><div class="flex items-center justify-between mt-2"><span class="font-semibold text-sky-300">- ${r.name}</span><span class="text-xs" style="color: var(--theme-color);">${'★'.repeat(r.stars)}</span></div></div>`).join('')}<button onclick="app.hideModal()" class="w-full bg-stone-600 font-semibold py-2 px-4 rounded-lg mt-4">Close</button></div>`; } catch(e) { return this.renderModal_default(); } },
+            renderModal_tarot() { return this.renderToolModal('Tarot Reading', '🎴', this.content.tool_tarot_desc); },
+            renderModal_crystal_ball() { return this.renderToolModal('Crystal Ball', '🔮', this.content.tool_crystal_ball_desc); },
+            renderModal_numerology() { if (!this.state.birthDetails) return `<p class="text-center">Please enter your birth details on the Profile page to use this tool.</p>`; const name = this.state.birthDetails.name; const dob = this.state.birthDetails.dob; const lifePath = this.calculateLifePath(dob); const destiny = this.calculateDestiny(name); return `<div class="text-center"><h2 class="text-lg font-bold mb-4" style="color: var(--theme-color);">Your Numerology Reading</h2><div class="space-y-4 text-sm"><div class="bg-white/5 p-3 rounded-lg"><strong>Life Path Number: ${lifePath}</strong><p class="text-stone-300 mt-1">${this.content['numerology_life_path_' + lifePath] || 'Interpretation not found.'}</p></div><div class="bg-white/5 p-3 rounded-lg"><strong>Destiny (Name) Number: ${destiny}</strong><p class="text-stone-300 mt-1">${this.content['numerology_destiny_' + destiny] || 'Interpretation not found.'}</p></div></div><button onclick="app.hideModal()" class="w-full bg-stone-600 font-semibold py-2 px-4 rounded-lg mt-6">Close</button></div>`; },
+            renderModal_compatibility() { const signs = ['Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo', 'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces']; return `<div><h2 class="text-lg font-bold mb-4 text-center" style="color: var(--theme-color);">Love Compatibility</h2><form id="compatibility-form" class="space-y-4"><select name="sign1" class="w-full p-2 bg-stone-800 rounded">${signs.map(s => `<option value="${s}">${s}</option>`).join('')}</select><select name="sign2" class="w-full p-2 bg-stone-800 rounded">${signs.map(s => `<option value="${s}">${s}</option>`).join('')}</select><button type="submit" class="w-full font-bold py-2 px-4 rounded-lg text-stone-900" style="background-color: var(--theme-color);">Check Compatibility</button></form><div id="compatibility-result" class="mt-4 text-sm"></div></div>`; },
+            renderModal_birth_details(options) { const d = options.isEditing ? this.state.birthDetails : {}; return `<h2 class="text-lg font-semibold text-center mb-4 text-sky-200">Enter Your Profile Details</h2><form id="modal-form" data-handler="saveBirthDetails" class="space-y-4"><input type="text" name="name" placeholder="Full Name" required class="w-full p-3 bg-stone-800 border border-stone-600 rounded-lg" value="${d?.name || ''}"><input type="tel" name="phone" placeholder="WhatsApp Number (e.g., 91...)" required class="w-full p-3 bg-stone-800 border border-stone-600 rounded-lg" value="${d?.phone || ''}"><input type="text" onfocus="(this.type='date')" onblur="this.type='text'" name="dob" placeholder="Date of Birth" required class="w-full p-3 bg-stone-800 border border-stone-600 rounded-lg" value="${d?.dob || ''}"><input type="text" onfocus="(this.type='time')" onblur="this.type='text'" name="tob" placeholder="Time of Birth" required class="w-full p-3 bg-stone-800 border border-stone-600 rounded-lg" value="${d?.tob || ''}"><input type="text" name="pob" placeholder="Place of Birth (City, Country)" required class="w-full p-3 bg-stone-800 border border-stone-600 rounded-lg" value="${d?.pob || ''}"><div class="flex gap-2 pt-2"><button type="button" onclick="app.hideModal()" class="w-full bg-stone-600 font-semibold py-3 px-4 rounded-lg">Cancel</button><button type="submit" class="w-full font-bold py-3 px-4 rounded-lg text-stone-900" style="background-color: var(--theme-color);">Save Details</button></div></form>`;},
+            renderModal_default() { return `<div class="text-center"><h2 class="text-lg font-semibold text-sky-200 mb-2">Coming Soon</h2><p class="text-stone-300 mb-4">This feature is under development.</p><button onclick="app.hideModal()" class="w-full mt-4 bg-stone-600 py-2 rounded-lg">Close</button></div>`; },
+            renderToolModal(title, icon, text) { return `<div class="text-center"><div class="text-6xl mb-4">${icon}</div><h2 class="text-lg font-semibold text-sky-200 mb-2">${title}</h2><p class="text-stone-300 mb-4">${text || 'Content not available.'}</p><button onclick="app.hideModal()" class="w-full bg-stone-600 font-semibold py-2 px-4 rounded-lg">Close</button></div>`; },
+            
+            // --- ALL OTHER LOGIC & HELPERS ---
+            calculateLifePath(dob) { let sum = dob.split('-').join('').split('').reduce((acc, digit) => acc + parseInt(digit), 0); while(sum > 9 && sum !== 11 && sum !== 22) { sum = String(sum).split('').reduce((acc, digit) => acc + parseInt(digit), 0); } return sum; },
+            calculateDestiny(name) { const values = {'a':1,'b':2,'c':3,'d':4,'e':5,'f':8,'g':3,'h':5,'i':1,'j':1,'k':2,'l':3,'m':4,'n':5,'o':7,'p':8,'q':1,'r':2,'s':3,'t':4,'u':6,'v':6,'w':6,'x':5,'y':1,'z':7}; let sum = name.toLowerCase().replace(/[^a-z]/g, '').split('').reduce((acc, char) => acc + (values[char] || 0), 0); while(sum > 9) { sum = String(sum).split('').reduce((acc, digit) => acc + parseInt(digit), 0); } return sum; },
+            getCompatibility(sign1, sign2) { const elements = {Aries:'Fire',Taurus:'Earth',Gemini:'Air',Cancer:'Water',Leo:'Fire',Virgo:'Earth',Libra:'Air',Scorpio:'Water',Sagittarius:'Fire',Capricorn:'Earth',Aquarius:'Air',Pisces:'Water'}; const e1 = elements[sign1]; const e2 = elements[sign2]; if (e1 === e2) return 'high'; if ((e1==='Fire'&&e2==='Air')||(e1==='Air'&&e2==='Fire')) return 'high'; if ((e1==='Earth'&&e2==='Water')||(e1==='Water'&&e2==='Earth')) return 'high'; if ((e1==='Fire'&&e2==='Water')||(e1==='Water'&&e2==='Fire')) return 'low'; if ((e1==='Earth'&&e2==='Air')||(e1==='Air'&&e2==='Earth')) return 'low'; return 'medium'; },
+            getSunSign(date) { const month = date.getUTCMonth() + 1; const day = date.getUTCDate(); if((month==3&&day>=21)||(month==4&&day<=19)) return 'Aries'; if((month==4&&day>=20)||(month==5&&day<=20)) return 'Taurus'; if((month==5&&day>=21)||(month==6&&day<=20)) return 'Gemini'; if((month==6&&day>=21)||(month==7&&day<=22)) return 'Cancer'; if((month==7&&day>=23)||(month==8&&day<=22)) return 'Leo'; if((month==8&&day>=23)||(month==9&&day<=22)) return 'Virgo'; if((month==9&&day>=23)||(month==10&&day<=22)) return 'Libra'; if((month==10&&day>=23)||(month==11&&day<=21)) return 'Scorpio'; if((month==11&&day>=22)||(month==12&&day<=21)) return 'Sagittarius'; if((month==12&&day>=22)||(month==1&&day<=19)) return 'Capricorn'; if((month==1&&day>=20)||(month==2&&day<=18)) return 'Aquarius'; return 'Pisces'; },
+            getSimulatedSign(index) { const signs = ['Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo', 'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces']; return signs[Math.floor(index) % 12]; },
+            calculatePanchang(date) { const timings = { sunrise: "06:05 AM", sunset: "07:02 PM", tithi: "Dwadashi", nakshatra: "Uttara Bhadrapada", rahuKaal: "04:30 PM - 06:00 PM", abhijit: "11:50 AM - 12:40 PM" }; return timings; },
             showLoading() { this.elements.loadingOverlay.classList.remove('hidden'); },
             hideLoading() { this.elements.loadingOverlay.classList.add('hidden'); },
-            async reset() {
-                this.showLoading();
-                const { error } = await supabaseClient.from('users').delete().eq('user_id', this.state.userId);
-                if(error) console.error("Error deleting user:", error);
-                localStorage.removeItem('planetsPredictorUserId');
-                window.location.reload();
-            },
-            // --- UNCHANGED CODE BELOW (renderers, event listeners, utils) ---
-            updateActiveTabUI() { this.elements.mainTabs.forEach(btn => { btn.classList.toggle('text-yellow-300', btn.dataset.tab === this.state.activeTab); btn.classList.toggle('text-stone-400', btn.dataset.tab !== this.state.activeTab); }); },
-            render_chart() { if (!this.state.birthDetails) { return `<div class="p-6 text-center space-y-4"><h2 class="text-xl font-semibold text-sky-200">Welcome, Seeker</h2><p>Please provide your birth details on the Profile tab to unlock the Astro-Oracle.</p><button onclick="app.navigateTo('profile')" class="bg-yellow-400 text-stone-900 font-bold py-3 px-5 rounded-lg">Go to Profile</button></div>`; } if (this.state.oracleHistory.length === 0) { this.addOracleMessage('oracle', `Greetings, ${this.state.birthDetails.name}. Ask me about your day, lucky color, or career focus.`); } const cosmicEvents = ["Mercury is in retrograde. Expect minor communication delays.", "Full Moon in Aries tonight. A powerful time for new beginnings.", "Venus enters Libra, fostering harmony in relationships.", "Mars squares Pluto, bringing intense energy. Channel it wisely."]; const todayEvent = cosmicEvents[new Date().getDate() % cosmicEvents.length]; return `<div class="p-6 border-b border-stone-700 flex-shrink-0"><h2 class="text-lg font-semibold text-sky-200">Cosmic Events Today</h2><p class="text-sm text-stone-300">${todayEvent}</p></div><div id="oracle-messages" class="flex-grow space-y-4 overflow-y-auto no-scrollbar p-6">${this.state.oracleHistory.map(msg => this.renderMessage(msg, 'oracle')).join('')}</div><form id="oracle-form" class="p-6 border-t border-stone-700 flex gap-2 flex-shrink-0"><input id="oracle-input" type="text" placeholder="Ask the Oracle..." required class="flex-grow p-3 bg-stone-800 border border-stone-600 rounded-lg"><button type="submit" class="bg-yellow-400 text-stone-900 font-bold p-3 rounded-lg">Ask</button></form>`; },
-            render_chat() { const baseClasses = "p-6 h-full flex flex-col"; if (!this.state.birthDetails) { return `<div class="p-6 text-center space-y-4"><p>Please provide your birth details on the Profile tab to begin.</p><button onclick="app.navigateTo('profile')" class="bg-yellow-400 text-stone-900 font-bold py-2 px-4 rounded-lg">Go to Profile</button></div>`; } if (!this.state.hasPaid) { return `<div class="p-6 text-center space-y-4"><p>Your chat is locked. Please complete the payment to connect with an astrologer.</p><button onclick="app.showModal('payment')" class="bg-yellow-400 text-stone-900 font-bold py-3 px-4 rounded-lg animate-pulse-zap">Unlock Chat</button></div>`; } let timerHTML = this.state.timerEndTime && !this.state.consultationEnded ? `<div class="bg-stone-800 p-2 rounded-lg text-center my-4 flex-shrink-0"><div id="timer" class="text-3xl font-bold tracking-widest text-yellow-300">--:--</div><p class="text-xs text-stone-400 mt-1">RESPONSE GUARANTEE</p></div>` : ''; let endButtonHTML = this.state.chatHistory.some(m => m.sender === 'astrologer') && !this.state.consultationEnded ? `<button id="end-consultation-btn" class="w-full mt-4 bg-red-500/80 text-white font-semibold py-2 px-4 rounded-lg text-sm flex-shrink-0">End Consultation</button>` : ''; let reviewButtonHTML = this.state.consultationEnded ? `<div class="text-center mt-4 p-3 bg-stone-800 rounded-lg flex-shrink-0"><p class="text-sm text-stone-300 mb-2">Thank you!</p><button id="review-btn" class="bg-green-500 text-white font-semibold py-2 px-4 rounded-lg">Leave a Review</button></div>` : ''; return `<div class="${baseClasses}">${timerHTML}<div id="chat-messages" class="flex-grow space-y-4 overflow-y-auto no-scrollbar">${this.state.chatHistory.map(msg => this.renderMessage(msg)).join('')}<div id="typing-indicator" class="hidden flex justify-start"><div class="max-w-xs md:max-w-md p-3 rounded-lg bg-stone-700 rounded-bl-none flex items-center space-x-1.5"><div class="typing-dot w-2 h-2 bg-stone-400 rounded-full"></div><div class="typing-dot w-2 h-2 bg-stone-400 rounded-full"></div><div class="typing-dot w-2 h-2 bg-stone-400 rounded-full"></div></div></div></div>${endButtonHTML}${reviewButtonHTML}<form id="chat-form" class="mt-4 flex gap-2 flex-shrink-0 ${this.state.consultationEnded ? 'hidden' : ''}"><input id="chat-input" type="text" placeholder="Ask your question..." required class="flex-grow p-3 bg-stone-800 border border-stone-600 rounded-lg"><button type="submit" class="bg-yellow-400 text-stone-900 font-bold p-3 rounded-lg">Send</button></form></div>`; },
-            renderMessage(msg, type = 'chat') { const isUser = msg.sender === 'user'; const userClasses = 'bg-indigo-500 text-white rounded-br-none'; const astrologerClasses = 'bg-stone-700 text-stone-200 rounded-bl-none'; const oracleClasses = 'bg-purple-500/20 border border-purple-400/30 text-stone-200 rounded-bl-none'; let senderClasses = astrologerClasses; if(isUser) senderClasses = userClasses; else if (type === 'oracle') senderClasses = oracleClasses; return `<div class="flex ${isUser ? 'justify-end' : 'justify-start'}"><div class="max-w-xs md:max-w-md p-3 rounded-lg ${senderClasses}"><p class="text-sm">${msg.text}</p></div></div>`; },
-            render_tools() { const tools = [{ id: 'tarot', name: 'Tarot Card', icon: '🎴' }, { id: 'crystal_ball', name: 'Crystal Ball', icon: '🔮' }, { id: 'numerology', name: 'Numerology', icon: '🔢' }, { id: 'panchang', name: 'Panchang', icon: '🕉️' }, { id: 'compatibility', name: 'Love Match', icon: '💞' }, { id: 'daily_insight', name: 'Daily Insight', icon: '✨' }, { id: 'wealth_report', name: 'Wealth Report', icon: '💰' }, { id: 'career_report', name: 'Career Report', icon: '📈' }, { id: 'yearly_forecast', name: 'Yearly Forecast', icon: '🗓️' },]; return `<h2 class="text-lg font-semibold text-sky-200 mb-4">Vedic Tools & Calculators</h2><div class="grid grid-cols-2 gap-4">${tools.map(tool => `<button onclick="app.showModal('${tool.id}')" class="text-center p-4 bg-stone-800/50 border border-stone-700 rounded-lg hover:border-indigo-400"><div class="text-4xl mb-2">${tool.icon}</div><h3 class="text-sm font-semibold text-stone-300">${tool.name}</h3></button>`).join('')}</div>`; },
-            render_profile() { const d = this.state.birthDetails; const detailsHTML = d ? `<div class="bg-stone-800/50 p-4 rounded-lg border border-stone-700 space-y-2 text-sm"><p><strong>Name:</strong> ${d.name}</p><p><strong>Phone:</strong> ${d.phone || 'Not set'}</p><p><strong>Birth Date:</strong> ${d.dob}</p><p><strong>Birth Time:</strong> ${d.tob}</p><p><strong>Birth Place:</strong> ${d.pob}</p><button onclick="app.editBirthDetails()" class="text-xs text-yellow-300 hover:underline mt-2">Edit Details</button></div>` : `<div class="text-center p-4 bg-stone-800/50 rounded-lg"><p class="text-stone-300">Your profile is not set.</p><button onclick="app.showModal('birth_details')" class="w-full mt-4 bg-yellow-400 text-stone-900 font-bold py-2 px-4 rounded-lg">Add Details</button></div>`; return `<h2 class="text-lg font-semibold text-sky-200 mb-4">Your Profile</h2> ${detailsHTML}<div class="mt-6 space-y-2"><button onclick="app.showModal('policies')" class="w-full text-left p-3 bg-stone-800 rounded-lg hover:bg-stone-700">Policies & Refunds</button><button onclick="app.showModal('reviews')" class="w-full text-left p-3 bg-stone-800 rounded-lg hover:bg-stone-700">Customer Reviews</button><button onclick="app.reset()" class="w-full text-left p-3 mt-4 bg-red-500/20 text-red-300 rounded-lg hover:bg-red-500/30">Reset & Sign Out</button></div>`; },
-            attachEventListeners() { this.elements.mainTabs.forEach(btn => btn.addEventListener('click', () => this.navigateTo(btn.dataset.tab))); this.elements.modal.container.addEventListener('click', (e) => { if (e.target === this.elements.modal.container) this.hideModal(); }); },
-            attachPageSpecificEventListeners() { const chatForm = document.getElementById('chat-form'); if (chatForm) chatForm.addEventListener('submit', e => { e.preventDefault(); this.handleUserMessage(); }); const oracleForm = document.getElementById('oracle-form'); if (oracleForm) oracleForm.addEventListener('submit', e => { e.preventDefault(); this.handleOracleQuery(); }); const endBtn = document.getElementById('end-consultation-btn'); if(endBtn) endBtn.addEventListener('click', () => this.endConsultation()); const reviewBtn = document.getElementById('review-btn'); if(reviewBtn) reviewBtn.addEventListener('click', () => this.sendWhatsAppReviewRequest()); if (this.state.activeTab === 'chat' && this.state.timerEndTime && !this.state.consultationEnded) this.startTimer(); ['chat-messages', 'oracle-messages'].forEach(id => { const el = document.getElementById(id); if (el) el.scrollTop = el.scrollHeight; }); },
-            navigateTo(tab) { this.state.activeTab = tab; this.render(); },
-            simulateOracleReply() { setTimeout(async () => { const replies = { color: "Your lucky color today is Emerald Green.", career: "Focus on collaboration today.", love: "For love, the stars advise open communication.", default: "The cosmos are vast and mysterious. Your question resonates with the energy of Jupiter." }; const lastQuery = this.state.oracleHistory.filter(m => m.sender === 'user').pop()?.text.toLowerCase() || ''; let replyKey = 'default'; if (lastQuery.includes('color')) replyKey = 'color'; if (lastQuery.includes('career')) replyKey = 'career'; if (lastQuery.includes('love')) replyKey = 'love'; await this.addOracleMessage('oracle', replies[replyKey]); }, 1500 + Math.random() * 1000); },
-            startPaidFlow() { if (!this.state.birthDetails) this.showModal('birth_details', { afterSave: () => this.navigateTo('chat') }); else this.navigateTo('chat'); },
+            generateUUID() { return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => { const r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8); return v.toString(16); }); },
+            showNotification(text) { this.elements.notification.text.textContent = text; this.elements.notification.banner.classList.remove('hidden'); this.elements.notification.banner.classList.add('notification-animation'); setTimeout(() => { this.elements.notification.banner.classList.add('hidden'); this.elements.notification.banner.classList.remove('notification-animation'); }, 4000); },
+            async addMessage(sender, text) { if (sender === 'user' && !this.state.hasPaid) { this.showNotification("Please complete payment to send messages."); return; } this.state.chatHistory.push({ sender, text, timestamp: Date.now() }); if (sender === 'user' && (this.state.chatHistory || []).filter(m => m.sender === 'user').length === 1) { this.state.timerEndTime = Date.now() + 3600 * 1000; this.simulateWhatsappNotification('Your 1-hour guaranteed chat session has started!'); } await this.saveStateToSupabase(); this.render(); if (sender === 'user') this.simulateAstrologerReply(); },
+            async simulateAstrologerReply() { const typingIndicator = document.getElementById('typing-indicator'); if(typingIndicator) typingIndicator.classList.remove('hidden'); setTimeout(async () => { if(typingIndicator) typingIndicator.classList.add('hidden'); const replies = ["Thank you. Let me analyze your chart...", "Interesting. This relates to your Venus placement.", "I see. Let's explore the remedies for this."]; const reply = replies[Math.floor(Math.random() * replies.length)]; await this.addMessage('astrologer', reply); }, 3000 + Math.random() * 3000); },
+            async endConsultation() { this.state.consultationEnded = true; if(this.timerInterval) clearInterval(this.timerInterval); await this.addMessage('astrologer', 'Thank you for the session. The chat has ended.'); await this.saveStateToSupabase(); this.render(); },
+            async saveBirthDetails(formData, options = {}) { this.state.birthDetails = { name: formData.get('name'), phone: formData.get('phone'), dob: formData.get('dob'), tob: formData.get('tob'), pob: formData.get('pob') }; await this.saveStateToSupabase(); this.simulateWhatsappNotification(`Welcome, ${this.state.birthDetails.name}! Your cosmic blueprint is ready.`); this.hideModal(); if (options.afterSave) options.afterSave(); else this.render(); },
+            initiatePayment() { const razorpayKey = 'rzp_test_YourKeyHere'; if(razorpayKey === 'rzp_test_YourKeyHere') { alert('Razorpay Key ID is not set. Using simulation.'); this.handlePaymentSuccess('simulated_payment_id'); return; } const options = { key: razorpayKey, amount: "50000", currency: "INR", name: "Planets Predictor", description: "Astrology Consultation", handler: async (response) => { await this.handlePaymentSuccess(response.razorpay_payment_id); }, prefill: { name: this.state.birthDetails?.name, contact: this.state.birthDetails?.phone }, theme: { color: getComputedStyle(document.documentElement).getPropertyValue('--theme-color') } }; const rzp1 = new Razorpay(options); rzp1.open(); },
+            async handlePaymentSuccess(paymentId) { this.showLoading(); this.state.hasPaid = true; this.state.razorpayPaymentId = paymentId; await this.saveStateToSupabase(); this.simulateWhatsappNotification('Payment successful! Your direct line to our astrologer is open.'); this.hideModal(); this.navigateTo('chat'); this.hideLoading(); },
             editBirthDetails() { this.showModal('birth_details', { isEditing: true }); },
             showModal(type, options = {}) { const contentRenderer = `renderModal_${type}`; let modalContentHTML = this.renderModal_default(); if (typeof this[contentRenderer] === 'function') modalContentHTML = this[contentRenderer](options); this.elements.modal.content.innerHTML = modalContentHTML; this.elements.modal.container.classList.remove('hidden'); const form = document.getElementById('modal-form'); if (form) form.addEventListener('submit', async (e) => { e.preventDefault(); const formData = new FormData(form); const handler = form.dataset.handler; if (handler && typeof this[handler] === 'function') await this[handler](formData, options); }); },
-            hideModal() { this.elements.modal.container.classList.add('hidden'); this.elements.modal.content.innerHTML = ''; },
-            renderModal_birth_details(options) { const d = options.isEditing ? this.state.birthDetails : {}; return `<h2 class="text-lg font-semibold text-center mb-4 text-sky-200">Enter Your Profile Details</h2><form id="modal-form" data-handler="saveBirthDetails" class="space-y-4"><input type="text" name="name" placeholder="Full Name" required class="w-full p-3 bg-stone-800 border border-stone-600 rounded-lg" value="${d?.name || ''}"><input type="tel" name="phone" placeholder="WhatsApp Number (e.g., 91...)" required class="w-full p-3 bg-stone-800 border border-stone-600 rounded-lg" value="${d?.phone || ''}"><input type="text" onfocus="(this.type='date')" onblur="this.type='text'" name="dob" placeholder="Date of Birth" required class="w-full p-3 bg-stone-800 border border-stone-600 rounded-lg" value="${d?.dob || ''}"><input type="text" onfocus="(this.type='time')" onblur="this.type='text'" name="tob" placeholder="Time of Birth" required class="w-full p-3 bg-stone-800 border border-stone-600 rounded-lg" value="${d?.tob || ''}"><input type="text" name="pob" placeholder="Place of Birth (City, Country)" required class="w-full p-3 bg-stone-800 border border-stone-600 rounded-lg" value="${d?.pob || ''}"><div class="flex gap-2 pt-2"><button type="button" onclick="app.hideModal()" class="w-full bg-stone-600 font-semibold py-3 px-4 rounded-lg">Cancel</button><button type="submit" class="w-full bg-yellow-400 text-stone-900 font-bold py-3 px-4 rounded-lg">Save Details</button></div></form>`;},
-            renderModal_payment() { return `<h2 class="text-lg font-semibold text-center mb-2 text-sky-200">Unlock Full Consultation</h2><p class="text-center text-stone-300 mb-4 text-sm">Please complete the payment to begin your live chat.</p><div class="flex flex-col items-center p-4 bg-white rounded-lg"><img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=upi%3A%2F%2Fpay%3Fpa%3D8302153208%40yespop%26pn%3DPLANETS%2520PREDICTOR" alt="UPI QR Code" class="w-48 h-48 rounded-md"><p class="text-stone-800 text-sm font-semibold mt-2">Scan to Pay</p></div><button onclick="app.completePayment()" class="w-full mt-4 bg-yellow-400 text-stone-900 font-bold py-3 px-4 rounded-lg animate-pulse-zap">Simulate Payment</button>`;},
-            renderModal_daily_insight() { return this.renderToolModal('Daily Cosmic Insight', '✨', this.getDailyHoroscope()); }, renderModal_crystal_ball() { return this.renderToolModal('Crystal Ball', '🔮', 'The mists swirl and reveal a message: "An unexpected opportunity will arise from a recent challenge. Be prepared to act."'); }, renderModal_tarot() { return this.renderToolModal('Tarot Reading', '🎴', 'Your card of the day is The Sun, symbolizing positivity, success, and vitality.'); }, renderModal_numerology() { return this.renderToolModal('Numerology', '🔢', 'Your Life Path number suggests you are a natural leader. (Simulated).'); }, renderModal_panchang() { return this.renderToolModal('Panchang', '🕉️', "Today's Tithi is Shukla Paksha, Dashami. Auspicious for new ventures. (Simulated)."); }, renderModal_policies() { return `<div class="text-sm space-y-4"><h3 class="font-bold text-yellow-300">Confidentiality Policy</h3><p class="text-stone-300">All personal information and consultation details are 100% confidential.</p><h3 class="font-bold text-yellow-300">1-Hour Response Guarantee</h3><p class="text-stone-300">We guarantee a personalized response within one hour of your question submission. If we fail, you are eligible for a full refund.</p><h3 class="font-bold text-yellow-300">Refund Policy</h3><p class="text-stone-300">Refunds are issued for service failures or major technical issues, not for change of mind.</p><button onclick="app.hideModal()" class="w-full bg-stone-600 font-semibold py-2 px-4 rounded-lg mt-4">Close</button></div>`; },
-            renderModal_reviews() { return `<div class="text-sm space-y-4"><div class="border-b border-stone-700 pb-3"><p class="text-stone-300">"Incredibly accurate reading and the 1-hour guarantee is amazing!"</p><div class="flex items-center justify-between mt-2"><span class="font-semibold text-sky-300">- Ananya S.</span><span class="text-xs text-stone-400">★★★★★</span></div></div><div><p class="text-stone-300">"Fast, detailed, and compassionate. Highly recommended."</p><div class="flex items-center justify-between mt-2"><span class="font-semibold text-sky-300">- Rohan M.</span><span class="text-xs text-stone-400">★★★★★</span></div></div><button onclick="app.hideModal()" class="w-full bg-stone-600 font-semibold py-2 px-4 rounded-lg mt-4">Close</button></div>`; },
-            renderModal_default() { return `<div class="text-center"><h2 class="text-lg font-semibold text-sky-200 mb-2">Coming Soon</h2><p class="text-stone-300 mb-4">This feature is under development.</p><button onclick="app.hideModal()" class="w-full mt-4 bg-stone-600 py-2 rounded-lg">Close</button></div>`; },
-            renderToolModal(title, icon, text) { return `<div class="text-center"><div class="text-6xl mb-4">${icon}</div><h2 class="text-lg font-semibold text-sky-200 mb-2">${title}</h2><p class="text-stone-300 mb-4">${text}</p><button onclick="app.hideModal()" class="w-full bg-stone-600 font-semibold py-2 px-4 rounded-lg">Close</button></div>`; },
-            showNotification(text) { this.elements.notification.text.textContent = text; this.elements.notification.banner.classList.remove('hidden'); this.elements.notification.banner.classList.add('notification-animation'); setTimeout(() => { this.elements.notification.banner.classList.add('hidden'); this.elements.notification.banner.classList.remove('notification-animation'); }, 4000); },
+            hideModal() { this.elements.modal.container.classList.add('hidden'); },
+            async reset() { this.showLoading(); const { error } = await supabaseClient.from('users').delete().eq('user_id', this.state.userId); if(error) console.error("Error deleting user:", error); localStorage.removeItem('planetsPredictorUserId'); window.location.reload(); },
+            simulateWhatsappNotification(message) { if(this.state.birthDetails?.phone) { console.log(`%c[WHATSAPP SIMULATION]`, 'color: #25D366; font-weight: bold;', `\nTo: ${this.state.birthDetails.phone}\nMessage: ${message}`); } },
+            sendWhatsAppReviewRequest() { if (!this.state.birthDetails?.phone) return; const message = `Thank you for your consultation with PLANETS PREDICTOR! We would be grateful if you could share your experience. Please reply with your review.\n\nUser ID: ${this.state.userId}`; window.open(`https://wa.me/${this.state.birthDetails.phone}?text=${encodeURIComponent(message)}`, '_blank'); },
             async startTimer() { if (this.timerInterval) clearInterval(this.timerInterval); const timerEl = document.getElementById('timer'); if(!timerEl || !this.state.timerEndTime) return; const update = async () => { const remaining = this.state.timerEndTime - Date.now(); if (remaining <= 0) { clearInterval(this.timerInterval); timerEl.textContent = "EXPIRED"; return; } const minutes = Math.floor((remaining / 1000 / 60) % 60).toString().padStart(2, '0'); const seconds = Math.floor((remaining / 1000) % 60).toString().padStart(2, '0'); timerEl.textContent = `${minutes}:${seconds}`; if (Math.floor(remaining / 1000 / 60) < 15 && !this.state.reminderSent) { this.simulateWhatsappNotification(`Reminder: Your answer will arrive in the app within 15 minutes!`); this.state.reminderSent = true; await this.saveStateToSupabase(); } }; update(); this.timerInterval = setInterval(update, 1000); },
-            simulateWhatsappNotification(message) { if(this.state.birthDetails && this.state.birthDetails.phone) { console.log(`%c[WHATSAPP SIMULATION]`, 'color: #25D366; font-weight: bold;', `\nTo: ${this.state.birthDetails.phone}\nMessage: ${message}`); } },
-            sendWhatsAppReviewRequest() { if (!this.state.birthDetails.phone) return; const message = `Thank you for your consultation with PLANETS PREDICTOR! We would be grateful if you could share your experience. Please reply with your review.\n\nUser ID: ${this.state.userId}`; window.open(`https://wa.me/${this.state.birthDetails.phone}?text=${encodeURIComponent(message)}`, '_blank'); },
-            getDailyHoroscope() { return "Today, the Moon's transit encourages you to express your ideas clearly. It's a favorable day for heartfelt conversations."; },
-            generateUUID() { return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => { const r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8); return v.toString(16); }); },
         };
+        
         window.addEventListener('DOMContentLoaded', () => app.init());
     </script>
-
 </body>
 </html>
 
