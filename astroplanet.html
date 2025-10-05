@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PLANETS PREDICTOR</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a; /* Slate 900 */
+            color: #f8fafc; /* Slate 50 */
+        }
+        @keyframes slide-in-up {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-slide-in-up { animation: slide-in-up 0.7s ease-out forwards; }
+
+        @keyframes pulse-zap {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(251, 146, 60, 0.7); }
+            50% { transform: scale(1.05); box-shadow: 0 0 10px 10px rgba(251, 146, 60, 0); }
+        }
+        .animate-pulse-zap { animation: pulse-zap 2s infinite; }
+        
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #1e293b; }
+        ::-webkit-scrollbar-thumb { background: #f97316; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #fb923c; }
+
+        .tab-active { border-bottom-color: #fb923c; color: #ffedd5; }
+        
+        .chat-bubble-sent { background-color: #3730a3; /* Indigo 800 */ align-self: flex-end; }
+        .chat-bubble-received { background-color: #1e293b; /* Slate 800 */ align-self: flex-start; }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4 bg-slate-900 bg-gradient-to-br from-slate-900 via-indigo-900/20 to-slate-900">
+
+    <div id="app" class="w-full max-w-md mx-auto">
+        <!-- Main Content Card -->
+        <div id="main-card" class="bg-slate-800/50 backdrop-blur-xl border border-slate-700 rounded-2xl shadow-2xl shadow-orange-500/10 overflow-hidden animate-slide-in-up">
+            
+            <header class="p-4 border-b border-slate-700 flex justify-between items-center">
+                <div>
+                    <h1 class="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-amber-400">PLANETS PREDICTOR</h1>
+                    <p class="text-xs text-slate-400">Your Cosmic Guide to Clarity</p>
+                </div>
+                <div id="wallet" class="text-right">
+                    <span class="text-xs text-slate-400 block">Wallet</span>
+                    <span id="wallet-balance" class="font-semibold text-lg text-amber-400">₹0</span>
+                </div>
+            </header>
+
+            <div class="p-6">
+                <main id="app-content">
+                    <!-- Screen 1: Landing / Service Selection -->
+                    <div id="screen-landing">
+                        <div class="bg-slate-700/50 border border-slate-600 rounded-lg p-4 mb-6 flex items-center space-x-4">
+                            <img src="https://placehold.co/80x80/e2e8f0/64748b?text=Guru+Ji" alt="Astrologer" class="w-20 h-20 rounded-full border-2 border-orange-400">
+                            <div>
+                                <h3 class="font-bold text-lg">Acharya Dev</h3>
+                                <p class="text-sm text-slate-300">Vedic Astrology, Tarot</p>
+                                <p class="text-xs text-slate-400">Exp: 15 Years | 2k+ Consultations</p>
+                                <div class="text-amber-400 mt-1">★★★★★</div>
+                            </div>
+                        </div>
+
+                        <p class="text-center text-slate-300 mb-6">Connect with our top astrologer for instant guidance.</p>
+                        <div class="space-y-4">
+                            <button id="start-chat-btn" class="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-4 rounded-lg transition duration-300 transform hover:scale-105 animate-pulse-zap flex items-center justify-center space-x-2">
+                                <!-- Chat Icon -->
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                                <span>Chat with Astrologer</span>
+                            </button>
+                            <button id="start-call-btn" class="w-full bg-slate-700 hover:bg-slate-600 text-slate-200 font-bold py-3 px-4 rounded-lg transition duration-300 flex items-center justify-center space-x-2">
+                                <!-- Call Icon -->
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                                <span>Call Astrologer</span>
+                             </button>
+                        </div>
+                    </div>
+
+                    <!-- Screen 2: Birth Details Input -->
+                    <div id="screen-details" class="hidden">
+                        <h2 class="text-xl font-semibold text-center mb-4">Enter Your Birth Details</h2>
+                        <form id="details-form" class="space-y-4">
+                            <input type="text" id="name" placeholder="Full Name" class="w-full p-3 bg-slate-700 rounded-lg border border-slate-600 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none" required>
+                            <input type="date" id="dob" placeholder="Date of Birth" class="w-full p-3 bg-slate-700 rounded-lg border border-slate-600 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none" required>
+                            <input type="time" id="tob" placeholder="Time of Birth" class="w-full p-3 bg-slate-700 rounded-lg border border-slate-600 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none" required>
+                            <input type="text" id="pob" placeholder="Place of Birth" class="w-full p-3 bg-slate-700 rounded-lg border border-slate-600 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none" required>
+                            <button type="submit" class="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-4 rounded-lg transition duration-300">Generate Chart & Proceed</button>
+                        </form>
+                    </div>
+
+                    <!-- Screen 3: LLM Preview & Payment -->
+                    <div id="screen-payment" class="hidden">
+                        <h2 class="text-xl font-semibold text-center mb-4">Your Initial Cosmic Reading</h2>
+                        <div class="bg-slate-700/50 p-4 rounded-lg border border-slate-600 mb-6 max-h-40 overflow-y-auto">
+                            <p id="llm-preview" class="text-slate-300 text-sm"></p>
+                        </div>
+                        <h3 class="text-lg font-semibold text-center mb-2">Add Money to Wallet</h3>
+                        <p class="text-center text-slate-400 mb-4">A fee of ₹199 will be deducted for the session. Scan to add funds.</p>
+                        <div class="flex justify-center mb-4">
+                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=upi://pay?pa=8302153208@yespop&pn=Planets%20Predictor" alt="Razorpay QR Code" class="rounded-lg bg-white p-2">
+                        </div>
+                        <button id="simulate-payment-btn" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg transition duration-300 animate-pulse-zap">
+                           Add ₹199 & Start Chat
+                        </button>
+                    </div>
+
+                    <!-- Screen 4: Question Input (Renamed to Chat) -->
+                    <div id="screen-question" class="hidden">
+                        <h2 class="text-xl font-semibold text-center mb-4">Start Your Chat</h2>
+                        <p class="text-center text-slate-400 mb-4">Your chat session is ready. Ask your question below to begin. You are guaranteed a response within 1 hour.</p>
+                        <form id="question-form">
+                            <textarea id="user-question" rows="4" class="w-full p-3 bg-slate-700 rounded-lg border border-slate-600 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none" placeholder="Type your question for Acharya Dev..." required></textarea>
+                            <button type="submit" class="mt-4 w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-4 rounded-lg transition duration-300">Send & Start 1-Hour Timer</button>
+                        </form>
+                    </div>
+
+                    <!-- Screen 5: Waiting for Response -->
+                    <div id="screen-waiting" class="hidden text-center">
+                        <h2 class="text-xl font-semibold mb-2">Thank You!</h2>
+                        <p class="text-slate-300 mb-6">Your question has been sent. Acharya Dev is preparing your detailed response.</p>
+                        <div class="bg-slate-700/50 p-4 rounded-lg border border-slate-600 mb-6">
+                            <p class="text-slate-400 text-sm mb-2">Response guaranteed in:</p>
+                            <div id="timer" class="text-4xl font-bold tracking-widest text-amber-400">60:00</div>
+                        </div>
+                        <p class="text-xs text-slate-500">A confirmation has been sent to your WhatsApp. You can safely close this page; your session is saved.</p>
+                    </div>
+
+                    <!-- Screen 6: Astrologer Response (Chat UI) -->
+                    <div id="screen-response" class="hidden">
+                        <h2 class="text-xl font-semibold text-center mb-4">Your Chat with Acharya Dev</h2>
+                        <div id="chat-container" class="space-y-4 p-4 bg-slate-900/50 rounded-lg h-80 overflow-y-auto flex flex-col">
+                            <!-- Chat messages will be injected here -->
+                        </div>
+                    </div>
+                </main>
+            </div>
+
+            <!-- Informational Hubs (Tabs) -->
+            <footer class="bg-slate-900/50 border-t border-slate-700 p-2">
+                <nav class="flex justify-around">
+                     <button data-tab="tab-reviews" class="tab-btn flex-1 text-sm text-slate-400 p-2 border-b-2 border-transparent hover:bg-slate-700/50 rounded-t-lg transition-colors tab-active">Reviews</button>
+                    <button data-tab="tab-policies" class="tab-btn flex-1 text-sm text-slate-400 p-2 border-b-2 border-transparent hover:bg-slate-700/50 rounded-t-lg transition-colors">Support</button>
+                    <button data-tab="tab-tools" class="tab-btn flex-1 text-sm text-slate-400 p-2 border-b-2 border-transparent hover:bg-slate-700/50 rounded-t-lg transition-colors">Tools</button>
+                </nav>
+            </footer>
+        </div>
+
+        <!-- Generic Modal -->
+        <div id="generic-modal" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50">
+            <div class="bg-slate-800 border border-slate-700 rounded-2xl shadow-lg p-6 w-full max-w-sm text-center">
+                <h2 id="modal-title" class="text-xl font-semibold mb-4 text-amber-400"></h2>
+                <p id="modal-content" class="text-slate-300 mb-6"></p>
+                <button id="close-modal-btn" class="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-4 rounded-lg transition duration-300">OK</button>
+            </div>
+        </div>
+    </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const LOCAL_STORAGE_KEY = 'planetsPredictorState_v2';
+    let state = {
+        userId: null,
+        birthDetails: null,
+        paymentComplete: false,
+        question: null,
+        timerStartTime: null,
+        astrologerResponse: null,
+        walletBalance: 0,
+    };
+    let timerInterval;
+
+    const saveState = () => localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(state));
+    const loadState = () => {
+        const savedState = localStorage.getItem(LOCAL_STORAGE_KEY);
+        if (savedState) state = JSON.parse(savedState);
+    };
+
+    const screens = ['screen-landing', 'screen-details', 'screen-payment', 'screen-question', 'screen-waiting', 'screen-response'];
+    const showScreen = (screenId) => {
+        screens.forEach(id => document.getElementById(id).classList.toggle('hidden', id !== screenId));
+    };
+
+    const updateWalletUI = () => {
+        document.getElementById('wallet-balance').textContent = `₹${state.walletBalance}`;
+    };
+    
+    const showModal = (title, content) => {
+        document.getElementById('modal-title').textContent = title;
+        document.getElementById('modal-content').textContent = content;
+        document.getElementById('generic-modal').classList.remove('hidden');
+    };
+    
+    const hideModal = () => {
+        document.getElementById('generic-modal').classList.add('hidden');
+    };
+
+    const getQuickInsight = () => {
+        const insights = [
+            "Today, the Moon's transit through your fourth house suggests focusing on home and emotional security. It's a good day for introspection and connecting with family.",
+            "Venus aligns with Jupiter today, bringing a wave of positive energy to your social life. An unexpected connection could be on the horizon.",
+            "With Mars in retrograde, you may feel a slowdown in your career ambitions. Use this time to strategize rather than push forward aggressively.",
+            "Mercury's favorable aspect encourages clear communication. It's an excellent day for important conversations and negotiations."
+        ];
+        return insights[Math.floor(Math.random() * insights.length)];
+    }
+
+    const getLLMPreview = (name) => `Hello ${name}. Based on your initial chart data, your Sun sign indicates a strong, determined personality, but the placement of Saturn suggests a need for patience in achieving your long-term goals. A deeper analysis will reveal how these cosmic energies specifically influence your current situation.`;
+
+    const getAstrologerResponse = (question, details) => `
+        <p class="mb-2">Dear ${details.name},</p>
+        <p class="mb-2">Thank you for your question: "${question}"</p>
+        <p class="mb-2">After careful analysis of your birth chart (DOB: ${details.dob}, Time: ${details.tob}, Place: ${details.pob}), I have the following insights for you.</p>
+        <p class="mb-2">The current planetary transits, especially Jupiter's movement into a favorable position, indicate a period of growth and opportunity in your professional life. However, the influence of Ketu suggests that you must be wary of making impulsive decisions. Trust your intuition, but verify with practical steps.</p>
+        <p>Regarding your specific concern about a career change, the next three months are highly conducive to exploring new paths. Look for opportunities that align with your innate creativity, as indicated by the strong placement of Venus in your chart. This is a time for calculated risks, not leaps of faith. Meditate on your true desires before committing.</p>
+    `;
+
+    const handleBirthDetailsSubmit = (e) => {
+        e.preventDefault();
+        state.userId = `PP${Date.now()}`;
+        state.birthDetails = {
+            name: document.getElementById('name').value,
+            dob: document.getElementById('dob').value,
+            tob: document.getElementById('tob').value,
+            pob: document.getElementById('pob').value,
+        };
+        document.getElementById('llm-preview').textContent = getLLMPreview(state.birthDetails.name);
+        saveState();
+        showScreen('screen-payment');
+    };
+
+    const handlePaymentSimulation = () => {
+        state.paymentComplete = true;
+        state.walletBalance = 199;
+        updateWalletUI();
+        saveState();
+        showScreen('screen-question');
+    };
+
+    const handleQuestionSubmit = (e) => {
+        e.preventDefault();
+        state.question = document.getElementById('user-question').value;
+        state.timerStartTime = Date.now();
+        state.walletBalance = 0; // Simulate deduction
+        updateWalletUI();
+        saveState();
+        openWhatsAppConfirmation();
+        startTimer();
+        showScreen('screen-waiting');
+    };
+    
+    const startTimer = () => {
+        if (timerInterval) clearInterval(timerInterval);
+        if (!state.timerStartTime) return;
+
+        const timerElement = document.getElementById('timer');
+        const oneHour = 60 * 60 * 1000;
+        const endTime = state.timerStartTime + oneHour;
+
+        const updateTimer = () => {
+            const timeLeft = endTime - Date.now();
+
+            if (timeLeft <= 0) {
+                clearInterval(timerInterval);
+                timerElement.textContent = "00:00";
+                if (!state.astrologerResponse) {
+                    state.astrologerResponse = getAstrologerResponse(state.question, state.birthDetails);
+                    saveState();
+                }
+                renderResponseScreen();
+                showScreen('screen-response');
+                return;
+            }
+
+            if (timeLeft <= 5 * 60 * 1000 && timeLeft > (5 * 60 * 1000 - 1000)) {
+                 console.log(`WHATSAPP REMINDER SIMULATION: "Your answer is coming shortly!" for User ID: ${state.userId}`);
+            }
+
+            const minutes = Math.floor((timeLeft % oneHour) / (60 * 1000));
+            const seconds = Math.floor((timeLeft % (60 * 1000)) / 1000);
+            
+            timerElement.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        };
+        
+        updateTimer();
+        timerInterval = setInterval(updateTimer, 1000);
+    };
+    
+    const openWhatsAppConfirmation = () => {
+        const message = `Thank you for your question on PLANETS PREDICTOR! Your User ID is ${state.userId}. We guarantee a response from our astrologer within 1 hour. We will notify you once it's ready.`;
+        window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
+    };
+
+    const renderResponseScreen = () => {
+        if (!state.question || !state.astrologerResponse) return;
+        const container = document.getElementById('chat-container');
+        container.innerHTML = `
+            <div class="p-3 rounded-lg max-w-xs md:max-w-md chat-bubble-sent">
+                <p class="text-sm">${state.question}</p>
+            </div>
+            <div class="p-3 rounded-lg max-w-xs md:max-w-md chat-bubble-received">
+                <p class="text-sm">${state.astrologerResponse}</p>
+            </div>
+        `;
+    };
+
+    const setupTabs = () => {
+        const tabButtons = document.querySelectorAll('.tab-btn');
+        const tabContents = {
+            "tab-policies": `
+                <div class="space-y-4">
+                    <div><h4 class="font-semibold text-orange-400">Confidentiality Policy</h4><p class="text-xs text-slate-400">Your personal data and consultations are strictly confidential.</p></div>
+                    <div><h4 class="font-semibold text-orange-400">1-Hour Response Guarantee</h4><p class="text-xs text-slate-400">We guarantee a response within 1 hour. If we fail, you are entitled to a full refund.</p></div>
+                    <div><h4 class="font-semibold text-orange-400">Refund Policy</h4><p class="text-xs text-slate-400">Refunds are issued for service failure or major technical issues.</p></div>
+                </div>`,
+            "tab-reviews": `
+                <div class="space-y-4">
+                    <div class="border-b border-slate-700 pb-2"><p class="font-semibold">Priya S. - ★★★★★ <span class="text-xs text-slate-500">(2 days ago)</span></p><p class="text-xs text-slate-400">"Incredibly accurate and insightful. The detailed consultation gave me so much clarity."</p></div>
+                    <div class="border-b border-slate-700 pb-2"><p class="font-semibold">Rohan K. - ★★★★★ <span class="text-xs text-slate-500">(5 days ago)</span></p><p class="text-xs text-slate-400">"The 1-hour guarantee is real! Got my detailed response very quickly."</p></div>
+                    <div><p class="font-semibold">Anjali M. - ★★★★★ <span class="text-xs text-slate-500">(1 week ago)</span></p><p class="text-xs text-slate-400">"A wonderful experience."</p></div>
+                </div>`,
+            "tab-tools": `
+                <div class="text-center">
+                    <p class="font-semibold mb-4">Explore Our Vedic Tools</p>
+                    <ul class="space-y-2 text-xs text-slate-400">
+                        <li>Birth Chart Calculator (Coming Soon)</li>
+                        <li>Vedic Spouse Finder (Coming Soon)</li>
+                        <li>Compatibility Matching (Coming Soon)</li>
+                    </ul>
+                </div>`
+        };
+        const contentContainer = document.createElement('div');
+        contentContainer.className = "p-4 text-sm text-slate-300 h-48 overflow-y-auto";
+        document.querySelector('footer').appendChild(contentContainer);
+
+        const showTabContent = (tabId) => {
+            contentContainer.innerHTML = tabContents[tabId];
+        };
+
+        tabButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                tabButtons.forEach(btn => btn.classList.remove('tab-active'));
+                button.classList.add('tab-active');
+                showTabContent(button.getAttribute('data-tab'));
+            });
+        });
+        showTabContent('tab-reviews'); // Show reviews by default
+    };
+
+    const init = () => {
+        loadState();
+        updateWalletUI();
+
+        if (state.astrologerResponse) {
+            renderResponseScreen();
+            showScreen('screen-response');
+        } else if (state.question && state.timerStartTime) {
+            startTimer();
+            showScreen('screen-waiting');
+        } else if (state.paymentComplete) {
+            showScreen('screen-question');
+        } else if (state.birthDetails) {
+            document.getElementById('llm-preview').textContent = getLLMPreview(state.birthDetails.name);
+            showScreen('screen-payment');
+        } else {
+            showScreen('screen-landing');
+        }
+        
+        document.getElementById('start-chat-btn').addEventListener('click', () => showScreen('screen-details'));
+        document.getElementById('start-call-btn').addEventListener('click', () => showModal('Feature Coming Soon', 'The live call feature is currently in development. Please use the chat option for now.'));
+        document.getElementById('close-modal-btn').addEventListener('click', hideModal);
+        document.getElementById('details-form').addEventListener('submit', handleBirthDetailsSubmit);
+        document.getElementById('simulate-payment-btn').addEventListener('click', handlePaymentSimulation);
+        document.getElementById('question-form').addEventListener('submit', handleQuestionSubmit);
+        setupTabs();
+    };
+
+    init();
+});
+</script>
+</body>
+</html>
+
